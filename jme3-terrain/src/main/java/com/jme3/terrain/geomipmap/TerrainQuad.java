@@ -567,13 +567,38 @@ public class TerrainQuad extends Node implements Terrain {
      * The heightmap's top left (0,0) coordinate is at the bottom, -x,-z
      * coordinate of the terrain, so it grows in the positive x.z direction.
      */
+    
+    protected void setDefaultOffset(Vector2f tempOffset, Vector3f origin) {
+    	tempOffset = new Vector2f();
+    	tempOffset.x = offset.x;
+    	tempOffset.y = offset.y;
+    	tempOffset.x += origin.x;
+    	tempOffset.y += origin.z;
+    }
+    
+    protected  void attachQuad(float[] heightBlock, int quarterSize, Vector2f tempOffset, int quaddrant, String name, int split, int blockSize) {
+    	Vector3f origin = new Vector3f(-quarterSize * stepScale.x, 0,
+                -quarterSize * stepScale.z);
+    	setDefaultOffset(tempOffset, origin);
+    	TerrainQuad quad = new TerrainQuad(getName() + name, blockSize,
+                split, stepScale, heightBlock, totalSize, tempOffset,
+                offsetAmount);
+    	
+    	quad.setLocalTranslation(origin);
+        quad.quadrant = quaddrant;
+        this.attachChild(quad);
+    }
+    
+
+    
+    
     protected void createQuad(int blockSize, float[] heightMap) {
         // create 4 terrain quads
         int quarterSize = size >> 2;
 
         int split = (size + 1) >> 1;
 
-        Vector2f tempOffset = new Vector2f();
+        Vector2f tempOffset = new Vector2f();;
         offsetAmount += quarterSize;
 
         //if (lodCalculator == null)
@@ -581,81 +606,27 @@ public class TerrainQuad extends Node implements Terrain {
 
         // 1 upper left of heightmap, upper left quad
         float[] heightBlock1 = createHeightSubBlock(heightMap, 0, 0, split);
-
-        Vector3f origin1 = new Vector3f(-quarterSize * stepScale.x, 0,
-                        -quarterSize * stepScale.z);
-
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        tempOffset.x += origin1.x;
-        tempOffset.y += origin1.z;
-
-        TerrainQuad quad1 = new TerrainQuad(getName() + "Quad1", blockSize,
-                        split, stepScale, heightBlock1, totalSize, tempOffset,
-                        offsetAmount);
-        quad1.setLocalTranslation(origin1);
-        quad1.quadrant = 1;
-        this.attachChild(quad1);
+        
+        attachQuad(heightBlock1, quarterSize, tempOffset, 1, "Quad1", split, blockSize);
 
         // 2 lower left of heightmap, lower left quad
         float[] heightBlock2 = createHeightSubBlock(heightMap, 0, split - 1,
                         split);
+        
+        attachQuad(heightBlock2, quarterSize, tempOffset, 2, "Quad2", split, blockSize);
 
-        Vector3f origin2 = new Vector3f(-quarterSize * stepScale.x, 0,
-                        quarterSize * stepScale.z);
-
-        tempOffset = new Vector2f();
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        tempOffset.x += origin2.x;
-        tempOffset.y += origin2.z;
-
-        TerrainQuad quad2 = new TerrainQuad(getName() + "Quad2", blockSize,
-                        split, stepScale, heightBlock2, totalSize, tempOffset,
-                        offsetAmount);
-        quad2.setLocalTranslation(origin2);
-        quad2.quadrant = 2;
-        this.attachChild(quad2);
 
         // 3 upper right of heightmap, upper right quad
         float[] heightBlock3 = createHeightSubBlock(heightMap, split - 1, 0,
                         split);
 
-        Vector3f origin3 = new Vector3f(quarterSize * stepScale.x, 0,
-                        -quarterSize * stepScale.z);
-
-        tempOffset = new Vector2f();
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        tempOffset.x += origin3.x;
-        tempOffset.y += origin3.z;
-
-        TerrainQuad quad3 = new TerrainQuad(getName() + "Quad3", blockSize,
-                        split, stepScale, heightBlock3, totalSize, tempOffset,
-                        offsetAmount);
-        quad3.setLocalTranslation(origin3);
-        quad3.quadrant = 3;
-        this.attachChild(quad3);
+        attachQuad(heightBlock3, quarterSize, tempOffset, 3, "Quad3", split, blockSize);
         
         // 4 lower right of heightmap, lower right quad
         float[] heightBlock4 = createHeightSubBlock(heightMap, split - 1,
                         split - 1, split);
 
-        Vector3f origin4 = new Vector3f(quarterSize * stepScale.x, 0,
-                        quarterSize * stepScale.z);
-
-        tempOffset = new Vector2f();
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        tempOffset.x += origin4.x;
-        tempOffset.y += origin4.z;
-
-        TerrainQuad quad4 = new TerrainQuad(getName() + "Quad4", blockSize,
-                        split, stepScale, heightBlock4, totalSize, tempOffset,
-                        offsetAmount);
-        quad4.setLocalTranslation(origin4);
-        quad4.quadrant = 4;
-        this.attachChild(quad4);
+        attachQuad(heightBlock4, quarterSize, tempOffset, 4, "Quad4", split, blockSize);
 
     }
 
