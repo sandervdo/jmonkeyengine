@@ -576,10 +576,7 @@ public class TerrainQuad extends Node implements Terrain {
     	tempOffset.y += origin.z;
     }
     
-    protected  void attachQuad(float[] heightBlock, int quarterSize, Vector2f tempOffset, int quaddrant, String name, int split, int blockSize) {
-    	Vector3f origin = new Vector3f(-quarterSize * stepScale.x, 0,
-                -quarterSize * stepScale.z);
-    	setDefaultOffset(tempOffset, origin);
+    protected  void attachQuad(float[] heightBlock, Vector3f origin, Vector2f tempOffset, int quaddrant, String name, int split, int blockSize) {	
     	TerrainQuad quad = new TerrainQuad(getName() + name, blockSize,
                 split, stepScale, heightBlock, totalSize, tempOffset,
                 offsetAmount);
@@ -606,27 +603,46 @@ public class TerrainQuad extends Node implements Terrain {
 
         // 1 upper left of heightmap, upper left quad
         float[] heightBlock1 = createHeightSubBlock(heightMap, 0, 0, split);
+    	Vector3f origin1 = new Vector3f(-quarterSize * stepScale.x, 0,
+                -quarterSize * stepScale.z);
+    	
+    	setDefaultOffset(tempOffset, origin1);
         
-        attachQuad(heightBlock1, quarterSize, tempOffset, 1, "Quad1", split, blockSize);
+        attachQuad(heightBlock1, origin1, tempOffset, 1, "Quad1", split, blockSize);
 
         // 2 lower left of heightmap, lower left quad
         float[] heightBlock2 = createHeightSubBlock(heightMap, 0, split - 1,
                         split);
         
-        attachQuad(heightBlock2, quarterSize, tempOffset, 2, "Quad2", split, blockSize);
+    	Vector3f origin2 = new Vector3f(-quarterSize * stepScale.x, 0,
+                quarterSize * stepScale.z);
+    	
+    	setDefaultOffset(tempOffset, origin2);
+        
+        attachQuad(heightBlock1, origin2, tempOffset, 2, "Quad2", split, blockSize);
 
 
         // 3 upper right of heightmap, upper right quad
         float[] heightBlock3 = createHeightSubBlock(heightMap, split - 1, 0,
                         split);
 
-        attachQuad(heightBlock3, quarterSize, tempOffset, 3, "Quad3", split, blockSize);
+    	Vector3f origin3 = new Vector3f(-quarterSize * stepScale.x, 0,
+                -quarterSize * stepScale.z);
+    	
+    	setDefaultOffset(tempOffset, origin3);
+        
+        attachQuad(heightBlock1, origin3, tempOffset, 3, "Quad3", split, blockSize);
         
         // 4 lower right of heightmap, lower right quad
         float[] heightBlock4 = createHeightSubBlock(heightMap, split - 1,
                         split - 1, split);
 
-        attachQuad(heightBlock4, quarterSize, tempOffset, 4, "Quad4", split, blockSize);
+    	Vector3f origin4 = new Vector3f(-quarterSize * stepScale.x, 0,
+                quarterSize * stepScale.z);
+    	
+    	setDefaultOffset(tempOffset, origin4);
+        
+        attachQuad(heightBlock1, origin4, tempOffset, 4, "Quad4", split, blockSize);
 
     }
 
