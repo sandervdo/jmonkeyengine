@@ -626,7 +626,7 @@ public class TerrainQuad extends Node implements Terrain {
         float[] heightBlock3 = createHeightSubBlock(heightMap, split - 1, 0,
                         split);
 
-    	Vector3f origin3 = new Vector3f(-quarterSize * stepScale.x, 0,
+    	Vector3f origin3 = new Vector3f(quarterSize * stepScale.x, 0,
                 -quarterSize * stepScale.z);
     	
     	setDefaultOffset(tempOffset, origin3);
@@ -637,7 +637,7 @@ public class TerrainQuad extends Node implements Terrain {
         float[] heightBlock4 = createHeightSubBlock(heightMap, split - 1,
                         split - 1, split);
 
-    	Vector3f origin4 = new Vector3f(-quarterSize * stepScale.x, 0,
+    	Vector3f origin4 = new Vector3f(quarterSize * stepScale.x, 0,
                 quarterSize * stepScale.z);
     	
     	setDefaultOffset(tempOffset, origin4);
