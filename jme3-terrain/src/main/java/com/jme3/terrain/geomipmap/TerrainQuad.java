@@ -385,6 +385,17 @@ public class TerrainQuad extends Node implements Terrain {
 
         return lodChanged;
     }
+    
+    protected void patchNeighbours(TerrainPatch patch) {
+        if (!patch.searchedForNeighboursAlready) {
+            // set the references to the neighbours
+            patch.rightNeighbour = findRightPatch(patch);
+            patch.bottomNeighbour = findDownPatch(patch);
+            patch.leftNeighbour = findLeftPatch(patch);
+            patch.topNeighbour = findTopPatch(patch);
+            patch.searchedForNeighboursAlready = true;
+        }
+    }
 
     protected synchronized void findNeighboursLod(HashMap<String,UpdatedTerrainPatch> updated) {
         if (children != null) {
@@ -395,14 +406,7 @@ public class TerrainQuad extends Node implements Terrain {
                 } else if (child instanceof TerrainPatch) {
 
                     TerrainPatch patch = (TerrainPatch) child;
-                    if (!patch.searchedForNeighboursAlready) {
-                        // set the references to the neighbours
-                        patch.rightNeighbour = findRightPatch(patch);
-                        patch.bottomNeighbour = findDownPatch(patch);
-                        patch.leftNeighbour = findLeftPatch(patch);
-                        patch.topNeighbour = findTopPatch(patch);
-                        patch.searchedForNeighboursAlready = true;
-                    }
+                    patchNeighbours(patch);
                     TerrainPatch right = patch.rightNeighbour;
                     TerrainPatch down = patch.bottomNeighbour;
                     TerrainPatch left = patch.leftNeighbour;
@@ -494,14 +498,7 @@ public class TerrainQuad extends Node implements Terrain {
                     UpdatedTerrainPatch utp = updated.get(patch.getName());
 
                     if(utp != null && utp.lodChanged()) {
-                        if (!patch.searchedForNeighboursAlready) {
-                            // set the references to the neighbours
-                            patch.rightNeighbour = findRightPatch(patch);
-                            patch.bottomNeighbour = findDownPatch(patch);
-                            patch.leftNeighbour = findLeftPatch(patch);
-                            patch.topNeighbour = findTopPatch(patch);
-                            patch.searchedForNeighboursAlready = true;
-                        }
+                    	patchNeighbours(patch);
                         TerrainPatch right = patch.rightNeighbour;
                         TerrainPatch down = patch.bottomNeighbour;
                         TerrainPatch top = patch.topNeighbour;
