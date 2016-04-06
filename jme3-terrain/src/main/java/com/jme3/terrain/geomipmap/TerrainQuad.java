@@ -595,7 +595,7 @@ public class TerrainQuad extends Node implements Terrain {
 
         int split = (size + 1) >> 1;
 
-        Vector2f tempOffset = new Vector2f();;
+        Vector2f tempOffset = new Vector2f();
         offsetAmount += quarterSize;
 
         //if (lodCalculator == null)
