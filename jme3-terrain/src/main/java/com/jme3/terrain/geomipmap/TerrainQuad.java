@@ -385,6 +385,27 @@ public class TerrainQuad extends Node implements Terrain {
 
         return lodChanged;
     }
+    
+    protected void patchNeighbours(TerrainPatch patch) {
+        if (!patch.searchedForNeighboursAlready) {
+            // set the references to the neighbours
+            patch.rightNeighbour = findRightPatch(patch);
+            patch.bottomNeighbour = findDownPatch(patch);
+            patch.leftNeighbour = findLeftPatch(patch);
+            patch.topNeighbour = findTopPatch(patch);
+            patch.searchedForNeighboursAlready = true;
+        }
+    }
+    
+    protected UpdatedTerrainPatch setTerrainPatch(TerrainPatch tp, HashMap<String,UpdatedTerrainPatch> updated) {
+        UpdatedTerrainPatch utpRet = updated.get(tp.getName());
+        if (utpRet == null) {
+            utpRet = new UpdatedTerrainPatch(tp);
+            updated.put(utpRet.getName(), utpRet);
+            utpRet.setNewLod(tp.lod);
+        }
+    	return utpRet;
+    }
 
     protected synchronized void findNeighboursLod(HashMap<String,UpdatedTerrainPatch> updated) {
         if (children != null) {
@@ -395,14 +416,7 @@ public class TerrainQuad extends Node implements Terrain {
                 } else if (child instanceof TerrainPatch) {
 
                     TerrainPatch patch = (TerrainPatch) child;
-                    if (!patch.searchedForNeighboursAlready) {
-                        // set the references to the neighbours
-                        patch.rightNeighbour = findRightPatch(patch);
-                        patch.bottomNeighbour = findDownPatch(patch);
-                        patch.leftNeighbour = findLeftPatch(patch);
-                        patch.topNeighbour = findTopPatch(patch);
-                        patch.searchedForNeighboursAlready = true;
-                    }
+                    patchNeighbours(patch);
                     TerrainPatch right = patch.rightNeighbour;
                     TerrainPatch down = patch.bottomNeighbour;
                     TerrainPatch left = patch.leftNeighbour;
@@ -415,43 +429,23 @@ public class TerrainQuad extends Node implements Terrain {
                     }
 
                     if (right != null) {
-                        UpdatedTerrainPatch utpR = updated.get(right.getName());
-                        if (utpR == null) {
-                            utpR = new UpdatedTerrainPatch(right);
-                            updated.put(utpR.getName(), utpR);
-                            utpR.setNewLod(right.lod);
-                        }
+                    	UpdatedTerrainPatch utpR = setTerrainPatch(right, updated);
                         utp.setRightLod(utpR.getNewLod());
                         utpR.setLeftLod(utp.getNewLod());
                     }
                     if (down != null) {
-                        UpdatedTerrainPatch utpD = updated.get(down.getName());
-                        if (utpD == null) {
-                            utpD = new UpdatedTerrainPatch(down);
-                            updated.put(utpD.getName(), utpD);
-                            utpD.setNewLod(down.lod);
-                        }
+                        UpdatedTerrainPatch utpD = setTerrainPatch(down, updated);
                         utp.setBottomLod(utpD.getNewLod());
                         utpD.setTopLod(utp.getNewLod());
                     }
                     
                     if (left != null) {
-                        UpdatedTerrainPatch utpL = updated.get(left.getName());
-                        if (utpL == null) {
-                            utpL = new UpdatedTerrainPatch(left);
-                            updated.put(utpL.getName(), utpL);
-                            utpL.setNewLod(left.lod);
-                        }
+                        UpdatedTerrainPatch utpL = setTerrainPatch(left, updated);
                         utp.setLeftLod(utpL.getNewLod());
                         utpL.setRightLod(utp.getNewLod());
                     }
                     if (top != null) {
-                        UpdatedTerrainPatch utpT = updated.get(top.getName());
-                        if (utpT == null) {
-                            utpT = new UpdatedTerrainPatch(top);
-                            updated.put(utpT.getName(), utpT);
-                            utpT.setNewLod(top.lod);
-                        }
+                        UpdatedTerrainPatch utpT = setTerrainPatch(top, updated);
                         utp.setTopLod(utpT.getNewLod());
                         utpT.setBottomLod(utp.getNewLod());
                     }
@@ -494,55 +488,29 @@ public class TerrainQuad extends Node implements Terrain {
                     UpdatedTerrainPatch utp = updated.get(patch.getName());
 
                     if(utp != null && utp.lodChanged()) {
-                        if (!patch.searchedForNeighboursAlready) {
-                            // set the references to the neighbours
-                            patch.rightNeighbour = findRightPatch(patch);
-                            patch.bottomNeighbour = findDownPatch(patch);
-                            patch.leftNeighbour = findLeftPatch(patch);
-                            patch.topNeighbour = findTopPatch(patch);
-                            patch.searchedForNeighboursAlready = true;
-                        }
+                    	patchNeighbours(patch);
                         TerrainPatch right = patch.rightNeighbour;
                         TerrainPatch down = patch.bottomNeighbour;
                         TerrainPatch top = patch.topNeighbour;
                         TerrainPatch left = patch.leftNeighbour;
+                        
                         if (right != null) {
-                            UpdatedTerrainPatch utpR = updated.get(right.getName());
-                            if (utpR == null) {
-                                utpR = new UpdatedTerrainPatch(right);
-                                updated.put(utpR.getName(), utpR);
-                                utpR.setNewLod(right.lod);
-                            }
+                            UpdatedTerrainPatch utpR = setTerrainPatch(right, updated);
                             utpR.setLeftLod(utp.getNewLod());
                             utpR.setFixEdges(true);
                         }
                         if (down != null) {
-                            UpdatedTerrainPatch utpD = updated.get(down.getName());
-                            if (utpD == null) {
-                                utpD = new UpdatedTerrainPatch(down);
-                                updated.put(utpD.getName(), utpD);
-                                utpD.setNewLod(down.lod);
-                            }
+                            UpdatedTerrainPatch utpD = setTerrainPatch(down, updated);
                             utpD.setTopLod(utp.getNewLod());
                             utpD.setFixEdges(true);
                         }
                         if (top != null){
-                            UpdatedTerrainPatch utpT = updated.get(top.getName());
-                            if (utpT == null) {
-                                utpT = new UpdatedTerrainPatch(top);
-                                updated.put(utpT.getName(), utpT);
-                                utpT.setNewLod(top.lod);
-                            }
+                            UpdatedTerrainPatch utpT = setTerrainPatch(top, updated);
                             utpT.setBottomLod(utp.getNewLod());
                             utpT.setFixEdges(true);
                         }
                         if (left != null){
-                            UpdatedTerrainPatch utpL = updated.get(left.getName());
-                            if (utpL == null) {
-                                utpL = new UpdatedTerrainPatch(left);
-                                updated.put(utpL.getName(), utpL);
-                                utpL.setNewLod(left.lod);
-                            }
+                            UpdatedTerrainPatch utpL = setTerrainPatch(left, updated);
                             utpL.setRightLod(utp.getNewLod());
                             utpL.setFixEdges(true);
                         }
@@ -599,6 +567,28 @@ public class TerrainQuad extends Node implements Terrain {
      * The heightmap's top left (0,0) coordinate is at the bottom, -x,-z
      * coordinate of the terrain, so it grows in the positive x.z direction.
      */
+    
+    protected void setDefaultOffset(Vector2f tempOffset, Vector3f origin) {
+    	tempOffset = new Vector2f();
+    	tempOffset.x = offset.x;
+    	tempOffset.y = offset.y;
+    	tempOffset.x += origin.x;
+    	tempOffset.y += origin.z;
+    }
+    
+    protected  void attachQuad(float[] heightBlock, Vector3f origin, Vector2f tempOffset, int quaddrant, String name, int split, int blockSize) {	
+    	TerrainQuad quad = new TerrainQuad(getName() + name, blockSize,
+                split, stepScale, heightBlock, totalSize, tempOffset,
+                offsetAmount);
+    	
+    	quad.setLocalTranslation(origin);
+        quad.quadrant = quaddrant;
+        this.attachChild(quad);
+    }
+    
+
+    
+    
     protected void createQuad(int blockSize, float[] heightMap) {
         // create 4 terrain quads
         int quarterSize = size >> 2;
@@ -613,81 +603,46 @@ public class TerrainQuad extends Node implements Terrain {
 
         // 1 upper left of heightmap, upper left quad
         float[] heightBlock1 = createHeightSubBlock(heightMap, 0, 0, split);
-
-        Vector3f origin1 = new Vector3f(-quarterSize * stepScale.x, 0,
-                        -quarterSize * stepScale.z);
-
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        tempOffset.x += origin1.x;
-        tempOffset.y += origin1.z;
-
-        TerrainQuad quad1 = new TerrainQuad(getName() + "Quad1", blockSize,
-                        split, stepScale, heightBlock1, totalSize, tempOffset,
-                        offsetAmount);
-        quad1.setLocalTranslation(origin1);
-        quad1.quadrant = 1;
-        this.attachChild(quad1);
+    	Vector3f origin1 = new Vector3f(-quarterSize * stepScale.x, 0,
+                -quarterSize * stepScale.z);
+    	
+    	setDefaultOffset(tempOffset, origin1);
+        
+        attachQuad(heightBlock1, origin1, tempOffset, 1, "Quad1", split, blockSize);
 
         // 2 lower left of heightmap, lower left quad
         float[] heightBlock2 = createHeightSubBlock(heightMap, 0, split - 1,
                         split);
+        
+    	Vector3f origin2 = new Vector3f(-quarterSize * stepScale.x, 0,
+                quarterSize * stepScale.z);
+    	
+    	setDefaultOffset(tempOffset, origin2);
+        
+        attachQuad(heightBlock2, origin2, tempOffset, 2, "Quad2", split, blockSize);
 
-        Vector3f origin2 = new Vector3f(-quarterSize * stepScale.x, 0,
-                        quarterSize * stepScale.z);
-
-        tempOffset = new Vector2f();
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        tempOffset.x += origin2.x;
-        tempOffset.y += origin2.z;
-
-        TerrainQuad quad2 = new TerrainQuad(getName() + "Quad2", blockSize,
-                        split, stepScale, heightBlock2, totalSize, tempOffset,
-                        offsetAmount);
-        quad2.setLocalTranslation(origin2);
-        quad2.quadrant = 2;
-        this.attachChild(quad2);
 
         // 3 upper right of heightmap, upper right quad
         float[] heightBlock3 = createHeightSubBlock(heightMap, split - 1, 0,
                         split);
 
-        Vector3f origin3 = new Vector3f(quarterSize * stepScale.x, 0,
-                        -quarterSize * stepScale.z);
-
-        tempOffset = new Vector2f();
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        tempOffset.x += origin3.x;
-        tempOffset.y += origin3.z;
-
-        TerrainQuad quad3 = new TerrainQuad(getName() + "Quad3", blockSize,
-                        split, stepScale, heightBlock3, totalSize, tempOffset,
-                        offsetAmount);
-        quad3.setLocalTranslation(origin3);
-        quad3.quadrant = 3;
-        this.attachChild(quad3);
+    	Vector3f origin3 = new Vector3f(quarterSize * stepScale.x, 0,
+                -quarterSize * stepScale.z);
+    	
+    	setDefaultOffset(tempOffset, origin3);
+        
+        attachQuad(heightBlock3, origin3, tempOffset, 3, "Quad3", split, blockSize);
         
         // 4 lower right of heightmap, lower right quad
         float[] heightBlock4 = createHeightSubBlock(heightMap, split - 1,
                         split - 1, split);
 
-        Vector3f origin4 = new Vector3f(quarterSize * stepScale.x, 0,
-                        quarterSize * stepScale.z);
-
-        tempOffset = new Vector2f();
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        tempOffset.x += origin4.x;
-        tempOffset.y += origin4.z;
-
-        TerrainQuad quad4 = new TerrainQuad(getName() + "Quad4", blockSize,
-                        split, stepScale, heightBlock4, totalSize, tempOffset,
-                        offsetAmount);
-        quad4.setLocalTranslation(origin4);
-        quad4.quadrant = 4;
-        this.attachChild(quad4);
+    	Vector3f origin4 = new Vector3f(quarterSize * stepScale.x, 0,
+                quarterSize * stepScale.z);
+    	
+    	setDefaultOffset(tempOffset, origin4);
+        
+        attachQuad(heightBlock4, origin4, tempOffset, 4, "Quad4", split, blockSize);
 
     }
 
@@ -710,6 +665,26 @@ public class TerrainQuad extends Node implements Terrain {
     /**
      * <code>createQuadPatch</code> creates four child patches from this quad.
      */
+    
+    protected Vector2f createBasicOffset() {
+    	Vector2f tempOffset = new Vector2f();
+        tempOffset.x = offset.x;
+        tempOffset.y = offset.y;
+        return tempOffset;
+    }
+    
+    protected void addPatch(String name, int quadrant, int split, float[] heightBlock, Vector3f origin, Vector2f tempOffset) {
+    	TerrainPatch patch = new TerrainPatch(getName() + "Patch1", split,
+                stepScale, heightBlock, origin, totalSize, tempOffset,
+                offsetAmount);
+    	patch.setQuadrant((short) quadrant);
+    	this.attachChild(patch);
+    	patch.setModelBound(new BoundingBox());
+    	patch.updateModelBound();
+        //patch.setLodCalculator(lodCalculator);
+        //TangentBinormalGenerator.generate(patch);
+    }
+    
     protected void createQuadPatch(float[] heightMap) {
         // create 4 terrain patches
         int quarterSize = size >> 2;
@@ -727,21 +702,11 @@ public class TerrainQuad extends Node implements Terrain {
         Vector3f origin1 = new Vector3f(-halfSize * stepScale.x, 0, -halfSize
                         * stepScale.z);
 
-        Vector2f tempOffset1 = new Vector2f();
-        tempOffset1.x = offset.x;
-        tempOffset1.y = offset.y;
+        Vector2f tempOffset1 = createBasicOffset();
         tempOffset1.x += origin1.x / 2;
         tempOffset1.y += origin1.z / 2;
 
-        TerrainPatch patch1 = new TerrainPatch(getName() + "Patch1", split,
-                        stepScale, heightBlock1, origin1, totalSize, tempOffset1,
-                        offsetAmount);
-        patch1.setQuadrant((short) 1);
-        this.attachChild(patch1);
-        patch1.setModelBound(new BoundingBox());
-        patch1.updateModelBound();
-        //patch1.setLodCalculator(lodCalculator);
-        //TangentBinormalGenerator.generate(patch1);
+        addPatch("Patch1", 1, split, heightBlock1, origin1, tempOffset1);
 
         // 2 upper left
         float[] heightBlock2 = createHeightSubBlock(heightMap, 0, split - 1,
@@ -749,21 +714,11 @@ public class TerrainQuad extends Node implements Terrain {
 
         Vector3f origin2 = new Vector3f(-halfSize * stepScale.x, 0, 0);
 
-        Vector2f tempOffset2 = new Vector2f();
-        tempOffset2.x = offset.x;
-        tempOffset2.y = offset.y;
+        Vector2f tempOffset2 = createBasicOffset();
         tempOffset2.x += origin1.x / 2;
         tempOffset2.y += quarterSize * stepScale.z;
 
-        TerrainPatch patch2 = new TerrainPatch(getName() + "Patch2", split,
-                        stepScale, heightBlock2, origin2, totalSize, tempOffset2,
-                        offsetAmount);
-        patch2.setQuadrant((short) 2);
-        this.attachChild(patch2);
-        patch2.setModelBound(new BoundingBox());
-        patch2.updateModelBound();
-        //patch2.setLodCalculator(lodCalculator);
-        //TangentBinormalGenerator.generate(patch2);
+        addPatch("Patch2", 2, split, heightBlock2, origin2, tempOffset2);
 
         // 3 lower right
         float[] heightBlock3 = createHeightSubBlock(heightMap, split - 1, 0,
@@ -771,21 +726,11 @@ public class TerrainQuad extends Node implements Terrain {
 
         Vector3f origin3 = new Vector3f(0, 0, -halfSize * stepScale.z);
 
-        Vector2f tempOffset3 = new Vector2f();
-        tempOffset3.x = offset.x;
-        tempOffset3.y = offset.y;
+        Vector2f tempOffset3 = createBasicOffset();
         tempOffset3.x += quarterSize * stepScale.x;
         tempOffset3.y += origin3.z / 2;
 
-        TerrainPatch patch3 = new TerrainPatch(getName() + "Patch3", split,
-                        stepScale, heightBlock3, origin3, totalSize, tempOffset3,
-                        offsetAmount);
-        patch3.setQuadrant((short) 3);
-        this.attachChild(patch3);
-        patch3.setModelBound(new BoundingBox());
-        patch3.updateModelBound();
-        //patch3.setLodCalculator(lodCalculator);
-        //TangentBinormalGenerator.generate(patch3);
+        addPatch("Patch3", 3, split, heightBlock3, origin3, tempOffset3);
 
         // 4 upper right
         float[] heightBlock4 = createHeightSubBlock(heightMap, split - 1,
@@ -793,21 +738,11 @@ public class TerrainQuad extends Node implements Terrain {
 
         Vector3f origin4 = new Vector3f(0, 0, 0);
 
-        Vector2f tempOffset4 = new Vector2f();
-        tempOffset4.x = offset.x;
-        tempOffset4.y = offset.y;
+        Vector2f tempOffset4 = createBasicOffset();
         tempOffset4.x += quarterSize * stepScale.x;
         tempOffset4.y += quarterSize * stepScale.z;
 
-        TerrainPatch patch4 = new TerrainPatch(getName() + "Patch4", split,
-                        stepScale, heightBlock4, origin4, totalSize, tempOffset4,
-                        offsetAmount);
-        patch4.setQuadrant((short) 4);
-        this.attachChild(patch4);
-        patch4.setModelBound(new BoundingBox());
-        patch4.updateModelBound();
-        //patch4.setLodCalculator(lodCalculator);
-        //TangentBinormalGenerator.generate(patch4);
+        addPatch("Patch4", 4, split, heightBlock4, origin4, tempOffset4);
     }
 
     public float[] createHeightSubBlock(float[] heightMap, int x,
