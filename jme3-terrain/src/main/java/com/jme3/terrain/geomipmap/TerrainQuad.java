@@ -590,12 +590,16 @@ public class TerrainQuad extends Node implements Terrain {
     
     
     protected void createQuad(int blockSize, float[] heightMap) {
+    	System.out.println("[OUTPUT DATA] blocksize:" + blockSize + " heightmap: ");
+    	for(int i = 0; i < heightMap.length; i++) {
+    		System.out.println(heightMap[i]);
+    	}
         // create 4 terrain quads
         int quarterSize = size >> 2;
 
         int split = (size + 1) >> 1;
 
-        Vector2f tempOffset = new Vector2f();;
+        Vector2f tempOffset = new Vector2f();
         offsetAmount += quarterSize;
 
         //if (lodCalculator == null)
@@ -845,99 +849,21 @@ public class TerrainQuad extends Node implements Terrain {
             return Float.NaN;
         return getHeightmapHeight(x, z);
     }
+    
 
     /**
      * This will just get the heightmap value at the supplied point,
      * not an interpolated (actual) height value.
-     */
+     */   
+    
     protected float getHeightmapHeight(int x, int z) {
-        int quad = findQuadrant(x, z);
-        int split = (size + 1) >> 1;
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial spat = children.get(i);
-                int col = x;
-                int row = z;
-                boolean match = false;
-
-                // get the childs quadrant
-                int childQuadrant = 0;
-                if (spat instanceof TerrainQuad) {
-                    childQuadrant = ((TerrainQuad) spat).getQuadrant();
-                } else if (spat instanceof TerrainPatch) {
-                    childQuadrant = ((TerrainPatch) spat).getQuadrant();
-                }
-
-                if (childQuadrant == 1 && (quad & 1) != 0) {
-                    match = true;
-                } else if (childQuadrant == 2 && (quad & 2) != 0) {
-                    row = z - split + 1;
-                    match = true;
-                } else if (childQuadrant == 3 && (quad & 4) != 0) {
-                    col = x - split + 1;
-                    match = true;
-                } else if (childQuadrant == 4 && (quad & 8) != 0) {
-                    col = x - split + 1;
-                    row = z - split + 1;
-                    match = true;
-                }
-
-                if (match) {
-                    if (spat instanceof TerrainQuad) {
-                        return ((TerrainQuad) spat).getHeightmapHeight(col, row);
-                    } else if (spat instanceof TerrainPatch) {
-                        return ((TerrainPatch) spat).getHeightmapHeight(col, row);
-                    }
-                }
-
-            }
-        }
-        return Float.NaN;
+    	QuadPoint quad = new QuadPoint(x, z, children, size);
+    	return quad.calculateHeightMap(x,z);
     }
 
     protected Vector3f getMeshNormal(int x, int z) {
-        int quad = findQuadrant(x, z);
-        int split = (size + 1) >> 1;
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial spat = children.get(i);
-                int col = x;
-                int row = z;
-                boolean match = false;
-
-                // get the childs quadrant
-                int childQuadrant = 0;
-                if (spat instanceof TerrainQuad) {
-                    childQuadrant = ((TerrainQuad) spat).getQuadrant();
-                } else if (spat instanceof TerrainPatch) {
-                    childQuadrant = ((TerrainPatch) spat).getQuadrant();
-                }
-
-                if (childQuadrant == 1 && (quad & 1) != 0) {
-                    match = true;
-                } else if (childQuadrant == 2 && (quad & 2) != 0) {
-                    row = z - split + 1;
-                    match = true;
-                } else if (childQuadrant == 3 && (quad & 4) != 0) {
-                    col = x - split + 1;
-                    match = true;
-                } else if (childQuadrant == 4 && (quad & 8) != 0) {
-                    col = x - split + 1;
-                    row = z - split + 1;
-                    match = true;
-                }
-
-                if (match) {
-                    if (spat instanceof TerrainQuad) {
-                        return ((TerrainQuad) spat).getMeshNormal(col, row);
-                    } else if (spat instanceof TerrainPatch) {
-                        return ((TerrainPatch) spat).getMeshNormal(col, row);
-                    }
-                }
-
-            }
-        }
-        return null;
+    	QuadPoint quad = new QuadPoint(x, z, children, size);
+    	return quad.calculateMeshNormal(x,z);
     }
 
     /**
@@ -955,54 +881,10 @@ public class TerrainQuad extends Node implements Terrain {
      * Used for searching for a child and keeping
      * track of its quadrant
      */
-    private class QuadrantChild {
-        int col;
-        int row;
-        Spatial child;
-        
-        QuadrantChild(int col, int row, Spatial child) {
-            this.col = col;
-            this.row = row;
-            this.child = child;
-        }
-    }
-    
+
     private QuadrantChild findMatchingChild(int x, int z) {
-        int quad = findQuadrant(x, z);
-        int split = (size + 1) >> 1;
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial spat = children.get(i);
-                int col = x;
-                int row = z;
-                boolean match = false;
-
-                // get the childs quadrant
-                int childQuadrant = 0;
-                if (spat instanceof TerrainQuad) {
-                    childQuadrant = ((TerrainQuad) spat).getQuadrant();
-                } else if (spat instanceof TerrainPatch) {
-                    childQuadrant = ((TerrainPatch) spat).getQuadrant();
-                }
-
-                if (childQuadrant == 1 && (quad & 1) != 0) {
-                    match = true;
-                } else if (childQuadrant == 2 && (quad & 2) != 0) {
-                    row = z - split + 1;
-                    match = true;
-                } else if (childQuadrant == 3 && (quad & 4) != 0) {
-                    col = x - split + 1;
-                    match = true;
-                } else if (childQuadrant == 4 && (quad & 8) != 0) {
-                    col = x - split + 1;
-                    row = z - split + 1;
-                    match = true;
-                }
-                if (match)
-                    return new QuadrantChild(col, row, spat);
-            }
-        }
-        return null;
+    	QuadPoint quad = new QuadPoint(x, z, children, size);
+    	return quad.calculateQuadrant(x,z);
     }
     
     /**
@@ -1170,7 +1052,7 @@ public class TerrainQuad extends Node implements Terrain {
 
         // distribute each locationHeight into the quadrant it intersects
         for (LocationHeight lh : locations) {
-            int quad = findQuadrant(lh.x, lh.z);
+            int quad = Utils.findQuadrant(lh.x, lh.z, size);
             int col = lh.x;
             int row = lh.z;
 
@@ -1233,19 +1115,7 @@ public class TerrainQuad extends Node implements Terrain {
 
 
     // a position can be in multiple quadrants, so use a bit anded value.
-    private int findQuadrant(int x, int y) {
-        int split = (size + 1) >> 1;
-        int quads = 0;
-        if (x < split && y < split)
-            quads |= 1;
-        if (x < split && y >= split - 1)
-            quads |= 2;
-        if (x >= split - 1 && y < split)
-            quads |= 4;
-        if (x >= split - 1 && y >= split - 1)
-            quads |= 8;
-        return quads;
-    }
+
 
     /**
      * lock or unlock the meshes of this terrain.

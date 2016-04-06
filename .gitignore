@@ -1010,3 +1010,4 @@ jme3-testdata/bin/Sound/Effects/kick.wav
 jme3-testdata/bin/Sound/Environment/Nature.ogg
 jme3-testdata/bin/Sound/Environment/Ocean Waves.ogg
 jme3-testdata/bin/Sound/Environment/River.ogg
+*.class
