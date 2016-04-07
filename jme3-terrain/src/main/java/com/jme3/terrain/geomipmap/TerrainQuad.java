@@ -274,6 +274,15 @@ public class TerrainQuad extends Node implements Terrain {
     	return this.neighbourFinder;
     }
     
+    public void setPicker(TerrainPicker tp) {
+    	this.picker = tp;
+    }
+    
+    public TerrainPicker getPicker() {
+    	return picker;
+    }
+    
+    
 
     /**
      * update the normals if there were any height changes recently.
@@ -295,31 +304,7 @@ public class TerrainQuad extends Node implements Terrain {
      * which runs on a separate thread, can access them safely.
      */
     protected void cacheTerrainTransforms() {
-        for (int i = children.size(); --i >= 0;) {
-            Spatial child = children.get(i);
-            if (child instanceof TerrainQuad) {
-                ((TerrainQuad) child).cacheTerrainTransforms();
-            } else if (child instanceof TerrainPatch) {
-                ((TerrainPatch) child).cacheTerrainTransforms();
-            }
-        }
-    }
-
-    private int collideWithRay(Ray ray, CollisionResults results) {
-        if (picker == null)
-            picker = new BresenhamTerrainPicker(this);
-
-        Vector3f intersection = picker.getTerrainIntersection(ray, results);
-        if (intersection != null) {
-            if (ray.getLimit() < Float.POSITIVE_INFINITY) {
-                if (results.getClosestCollision().getDistance() <= ray.getLimit())
-                    return 1; // in range
-                else
-                    return 0; // out of range
-            } else
-                return 1;
-        } else
-            return 0;
+    	TerrainTransform.cacheTerrainTransforms(this);
     }
 
     /**
@@ -769,11 +754,13 @@ public class TerrainQuad extends Node implements Terrain {
      */   
     
     protected float getHeightmapHeight(int x, int z) {
+    	System.out.println("running 1");
     	QuadPoint quad = new QuadPoint(x, z, children, size);
     	return quad.calculateHeightMap(x,z);
     }
 
     protected Vector3f getMeshNormal(int x, int z) {
+    	System.out.println("running 2");
     	QuadPoint quad = new QuadPoint(x, z, children, size);
     	return quad.calculateMeshNormal(x,z);
     }
@@ -795,6 +782,7 @@ public class TerrainQuad extends Node implements Terrain {
      */
 
     private QuadrantChild findMatchingChild(int x, int z) {
+    	System.out.println("running 3");
     	QuadPoint quad = new QuadPoint(x, z, children, size);
     	return quad.calculateQuadrant(x,z);
     }
@@ -1137,7 +1125,7 @@ public class TerrainQuad extends Node implements Terrain {
         int total = 0;
 
         if (other instanceof Ray)
-            return collideWithRay((Ray)other, results);
+            return TerrainTransform.collideWithRay((Ray)other, results, this);
 
         // if it didn't collide with this bbox, return
         if (other instanceof BoundingVolume)

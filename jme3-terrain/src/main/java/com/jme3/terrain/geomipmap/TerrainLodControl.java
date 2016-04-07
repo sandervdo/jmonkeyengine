@@ -233,7 +233,7 @@ public class TerrainLodControl extends AbstractControl {
     
     protected void prepareTerrain() {
         TerrainQuad terrain = (TerrainQuad)getSpatial();
-        terrain.cacheTerrainTransforms();// cache the terrain's world transforms so they can be accessed on the separate thread safely
+        TerrainTransform.cacheTerrainTransforms(terrain);// cache the terrain's world transforms so they can be accessed on the separate thread safely
     }
     
     protected UpdateLOD getLodThread(List<Vector3f> locations, LodCalculator lodCalculator) {
