@@ -18,8 +18,8 @@ public class QuadPoint {
 	    
     
     private boolean calculateColRow(int i, int x, int z, Spatial spat ) {
-        int col = x;
-        int row = z;
+        col = x;
+        row = z;
         boolean match = false;
 
         // get the childs quadrant

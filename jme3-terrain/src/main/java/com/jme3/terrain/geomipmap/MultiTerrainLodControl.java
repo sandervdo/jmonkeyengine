@@ -127,7 +127,7 @@ public class MultiTerrainLodControl extends TerrainLodControl {
             
             for (TerrainQuad terrainQuad : terrains) {
                 // go through each patch and calculate its LOD based on camera distance
-                terrainQuad.calculateLod(camLocations, updated, lodCalculator); // 'updated' gets populated here
+                TerrainTransform.calculateLod(camLocations, updated, lodCalculator, terrainQuad); // 'updated' gets populated here
             }
             
             for (TerrainQuad terrainQuad : terrains) {
