@@ -107,5 +107,24 @@ public class TerrainTransform {
 
         return lodChanged;
     }
+    
+    /**
+     * Reset the cached references of neighbours.
+     * TerrainQuad caches neighbours for faster LOD checks.
+     * Sometimes you might want to reset this cache (for instance in TerrainGrid)
+     */
+    public static void resetCachedNeighbours(TerrainQuad terrainQuad) {
+        if (terrainQuad.getChildren() != null) {
+            for (int x = terrainQuad.getChildren().size(); --x >= 0;) {
+                Spatial child = terrainQuad.getChildren().get(x);
+                if (child instanceof TerrainQuad) {
+                    resetCachedNeighbours(((TerrainQuad) child));
+                } else if (child instanceof TerrainPatch) {
+                    TerrainPatch patch = (TerrainPatch) child;
+                    patch.searchedForNeighboursAlready = false;
+                }
+            }
+        }
+    }
 
 }
