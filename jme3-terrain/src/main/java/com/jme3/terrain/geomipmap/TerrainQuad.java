@@ -54,6 +54,7 @@ import com.jme3.terrain.geomipmap.lodcalc.LodCalculator;
 import com.jme3.terrain.geomipmap.picking.BresenhamTerrainPicker;
 import com.jme3.terrain.geomipmap.picking.TerrainPickData;
 import com.jme3.terrain.geomipmap.picking.TerrainPicker;
+import com.jme3.util.SafeArrayList;
 import com.jme3.util.TangentBinormalGenerator;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -211,6 +212,7 @@ public class TerrainQuad extends Node implements Terrain {
         //fixNormalEdges(affectedAreaBBox);
         //addControl(new NormalRecalcControl(this));
     }
+    
 
     protected TerrainQuad(String name, int patchSize, int quadSize,
                             Vector3f scale, float[] heightMap, int totalSize,
@@ -219,7 +221,7 @@ public class TerrainQuad extends Node implements Terrain {
         super(name);
         
         if (heightMap == null)
-            heightMap = generateDefaultHeightMap(quadSize);
+            heightMap = Utils.generateDefaultHeightMap(quadSize);
         
         if (!FastMath.isPowerOfTwo(quadSize - 1)) {
             throw new RuntimeException("size given: " + quadSize + "  Terrain quad sizes may only be (2^N + 1)");
@@ -227,6 +229,8 @@ public class TerrainQuad extends Node implements Terrain {
         if (FastMath.sqrt(heightMap.length) > quadSize) {
             Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Heightmap size is larger than the terrain size. Make sure your heightmap image is the same size as the terrain!");
         }
+        
+        TerrainQuadObject quadObj = new TerrainQuadObject();
         
         this.offset = offset;
         this.offsetAmount = offsetAmount;
@@ -249,13 +253,27 @@ public class TerrainQuad extends Node implements Terrain {
         affectedAreaBBox = new BoundingBox(new Vector3f(0,0,0), totalSize*2, Float.MAX_VALUE, totalSize*2);
     }
     
-    /**
-     * Create just a flat heightmap
-     */
-    private float[] generateDefaultHeightMap(int size) {
-        float[] heightMap = new float[size*size];
-        return heightMap;
+    public SafeArrayList<Spatial> getChildren() {
+    	return children;
     }
+    
+    public void setChildren(SafeArrayList<Spatial> child) {
+    	this.children = child;
+    }
+    
+    public void setQuadrant(int quad) {
+    	this.quadrant = quad;
+    }
+    
+    
+    public Node getRemoteParent() {
+    	return getParent();
+    }
+    
+    public NeighbourFinder getNeighbourFinder() {
+    	return this.neighbourFinder;
+    }
+    
 
     /**
      * update the normals if there were any height changes recently.
@@ -386,72 +404,9 @@ public class TerrainQuad extends Node implements Terrain {
         return lodChanged;
     }
     
-    protected void patchNeighbours(TerrainPatch patch) {
-        if (!patch.searchedForNeighboursAlready) {
-            // set the references to the neighbours
-            patch.rightNeighbour = findRightPatch(patch);
-            patch.bottomNeighbour = findDownPatch(patch);
-            patch.leftNeighbour = findLeftPatch(patch);
-            patch.topNeighbour = findTopPatch(patch);
-            patch.searchedForNeighboursAlready = true;
-        }
-    }
-    
-    protected UpdatedTerrainPatch setTerrainPatch(TerrainPatch tp, HashMap<String,UpdatedTerrainPatch> updated) {
-        UpdatedTerrainPatch utpRet = updated.get(tp.getName());
-        if (utpRet == null) {
-            utpRet = new UpdatedTerrainPatch(tp);
-            updated.put(utpRet.getName(), utpRet);
-            utpRet.setNewLod(tp.lod);
-        }
-    	return utpRet;
-    }
 
     protected synchronized void findNeighboursLod(HashMap<String,UpdatedTerrainPatch> updated) {
-        if (children != null) {
-            for (int x = children.size(); --x >= 0;) {
-                Spatial child = children.get(x);
-                if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).findNeighboursLod(updated);
-                } else if (child instanceof TerrainPatch) {
-
-                    TerrainPatch patch = (TerrainPatch) child;
-                    patchNeighbours(patch);
-                    TerrainPatch right = patch.rightNeighbour;
-                    TerrainPatch down = patch.bottomNeighbour;
-                    TerrainPatch left = patch.leftNeighbour;
-                    TerrainPatch top = patch.topNeighbour;
-
-                    UpdatedTerrainPatch utp = updated.get(patch.getName());
-                    if (utp == null) {
-                        utp = new UpdatedTerrainPatch(patch, patch.lod);
-                        updated.put(utp.getName(), utp);
-                    }
-
-                    if (right != null) {
-                    	UpdatedTerrainPatch utpR = setTerrainPatch(right, updated);
-                        utp.setRightLod(utpR.getNewLod());
-                        utpR.setLeftLod(utp.getNewLod());
-                    }
-                    if (down != null) {
-                        UpdatedTerrainPatch utpD = setTerrainPatch(down, updated);
-                        utp.setBottomLod(utpD.getNewLod());
-                        utpD.setTopLod(utp.getNewLod());
-                    }
-                    
-                    if (left != null) {
-                        UpdatedTerrainPatch utpL = setTerrainPatch(left, updated);
-                        utp.setLeftLod(utpL.getNewLod());
-                        utpL.setRightLod(utp.getNewLod());
-                    }
-                    if (top != null) {
-                        UpdatedTerrainPatch utpT = setTerrainPatch(top, updated);
-                        utp.setTopLod(utpT.getNewLod());
-                        utpT.setBottomLod(utp.getNewLod());
-                    }
-                }
-            }
-        }
+    	TerrainNeighbours.findNeighboursLod(updated, this);
     }
 
     /**
@@ -478,46 +433,7 @@ public class TerrainQuad extends Node implements Terrain {
      * changed its LOD to a greater value (less detailed)
      */
     protected synchronized void fixEdges(HashMap<String,UpdatedTerrainPatch> updated) {
-        if (children != null) {
-            for (int x = children.size(); --x >= 0;) {
-                Spatial child = children.get(x);
-                if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).fixEdges(updated);
-                } else if (child instanceof TerrainPatch) {
-                    TerrainPatch patch = (TerrainPatch) child;
-                    UpdatedTerrainPatch utp = updated.get(patch.getName());
-
-                    if(utp != null && utp.lodChanged()) {
-                    	patchNeighbours(patch);
-                        TerrainPatch right = patch.rightNeighbour;
-                        TerrainPatch down = patch.bottomNeighbour;
-                        TerrainPatch top = patch.topNeighbour;
-                        TerrainPatch left = patch.leftNeighbour;
-                        
-                        if (right != null) {
-                            UpdatedTerrainPatch utpR = setTerrainPatch(right, updated);
-                            utpR.setLeftLod(utp.getNewLod());
-                            utpR.setFixEdges(true);
-                        }
-                        if (down != null) {
-                            UpdatedTerrainPatch utpD = setTerrainPatch(down, updated);
-                            utpD.setTopLod(utp.getNewLod());
-                            utpD.setFixEdges(true);
-                        }
-                        if (top != null){
-                            UpdatedTerrainPatch utpT = setTerrainPatch(top, updated);
-                            utpT.setBottomLod(utp.getNewLod());
-                            utpT.setFixEdges(true);
-                        }
-                        if (left != null){
-                            UpdatedTerrainPatch utpL = setTerrainPatch(left, updated);
-                            utpL.setRightLod(utp.getNewLod());
-                            utpL.setFixEdges(true);
-                        }
-                    }
-                }
-            }
-        }
+    	TerrainNeighbours.fixEdges(updated, this);
     }
 
     protected synchronized void reIndexPages(HashMap<String,UpdatedTerrainPatch> updated, boolean usesVariableLod) {
@@ -590,10 +506,6 @@ public class TerrainQuad extends Node implements Terrain {
     
     
     protected void createQuad(int blockSize, float[] heightMap) {
-    	System.out.println("[OUTPUT DATA] blocksize:" + blockSize + " heightmap: ");
-    	for(int i = 0; i < heightMap.length; i++) {
-    		System.out.println(heightMap[i]);
-    	}
         // create 4 terrain quads
         int quarterSize = size >> 2;
 
@@ -1173,226 +1085,20 @@ public class TerrainQuad extends Node implements Terrain {
         return null;
     }
 
-    protected TerrainPatch findRightPatch(TerrainPatch tp) {
-        if (tp.getQuadrant() == 1)
-            return getPatch(3);
-        else if (tp.getQuadrant() == 2)
-            return getPatch(4);
-        else if (tp.getQuadrant() == 3) {
-            // find the patch to the right and ask it for child 1.
-            TerrainQuad quad = findRightQuad();
-            if (quad != null)
-                return quad.getPatch(1);
-        } else if (tp.getQuadrant() == 4) {
-            // find the patch to the right and ask it for child 2.
-            TerrainQuad quad = findRightQuad();
-            if (quad != null)
-                return quad.getPatch(2);
-        }
-
-        return null;
-    }
-
-    protected TerrainPatch findDownPatch(TerrainPatch tp) {
-        if (tp.getQuadrant() == 1)
-            return getPatch(2);
-        else if (tp.getQuadrant() == 3)
-            return getPatch(4);
-        else if (tp.getQuadrant() == 2) {
-            // find the patch below and ask it for child 1.
-            TerrainQuad quad = findDownQuad();
-            if (quad != null)
-                return quad.getPatch(1);
-        } else if (tp.getQuadrant() == 4) {
-            TerrainQuad quad = findDownQuad();
-            if (quad != null)
-                return quad.getPatch(3);
-        }
-
-        return null;
-    }
-
-
-    protected TerrainPatch findTopPatch(TerrainPatch tp) {
-        if (tp.getQuadrant() == 2)
-            return getPatch(1);
-        else if (tp.getQuadrant() == 4)
-            return getPatch(3);
-        else if (tp.getQuadrant() == 1) {
-            // find the patch above and ask it for child 2.
-            TerrainQuad quad = findTopQuad();
-            if (quad != null)
-                return quad.getPatch(2);
-        } else if (tp.getQuadrant() == 3) {
-            TerrainQuad quad = findTopQuad();
-            if (quad != null)
-                return quad.getPatch(4);
-        }
-
-        return null;
-    }
-
-    protected TerrainPatch findLeftPatch(TerrainPatch tp) {
-        if (tp.getQuadrant() == 3)
-            return getPatch(1);
-        else if (tp.getQuadrant() == 4)
-            return getPatch(2);
-        else if (tp.getQuadrant() == 1) {
-            // find the patch above and ask it for child 3.
-            TerrainQuad quad = findLeftQuad();
-            if (quad != null)
-                return quad.getPatch(3);
-        } else if (tp.getQuadrant() == 2) {
-            TerrainQuad quad = findLeftQuad();
-            if (quad != null)
-                return quad.getPatch(4);
-        }
-
-        return null;
-    }
-
     protected TerrainQuad findRightQuad() {
-        boolean useFinder = false;
-        if (getParent() == null || !(getParent() instanceof TerrainQuad)) {
-            if (neighbourFinder == null)
-                return null;
-            else
-                useFinder = true;
-        }
-
-        TerrainQuad pQuad = null;
-        if (!useFinder)
-            pQuad = (TerrainQuad) getParent();
-
-        if (quadrant == 1)
-            return pQuad.getQuad(3);
-        else if (quadrant == 2)
-            return pQuad.getQuad(4);
-        else if (quadrant == 3) {
-            TerrainQuad quad = pQuad.findRightQuad();
-            if (quad != null)
-                return quad.getQuad(1);
-        } else if (quadrant == 4) {
-            TerrainQuad quad = pQuad.findRightQuad();
-            if (quad != null)
-                return quad.getQuad(2);
-        } else if (quadrant == 0) {
-            // at the top quad
-            if (useFinder) {
-                TerrainQuad quad = neighbourFinder.getRightQuad(this);
-                return quad;
-            }
-        }
-
-        return null;
+    	return TerrainNeighbours.findRightQuad(this);
     }
 
     protected TerrainQuad findDownQuad() {
-        boolean useFinder = false;
-        if (getParent() == null || !(getParent() instanceof TerrainQuad)) {
-            if (neighbourFinder == null)
-                return null;
-            else
-                useFinder = true;
-        }
-
-        TerrainQuad pQuad = null;
-        if (!useFinder)
-            pQuad = (TerrainQuad) getParent();
-
-        if (quadrant == 1)
-            return pQuad.getQuad(2);
-        else if (quadrant == 3)
-            return pQuad.getQuad(4);
-        else if (quadrant == 2) {
-            TerrainQuad quad = pQuad.findDownQuad();
-            if (quad != null)
-                return quad.getQuad(1);
-        } else if (quadrant == 4) {
-            TerrainQuad quad = pQuad.findDownQuad();
-            if (quad != null)
-                return quad.getQuad(3);
-        } else if (quadrant == 0) {
-            // at the top quad
-            if (useFinder) {
-                TerrainQuad quad = neighbourFinder.getDownQuad(this);
-                return quad;
-            }
-        }
-
-        return null;
+	return TerrainNeighbours.findDownQuad(this);
     }
 
     protected TerrainQuad findTopQuad() {
-        boolean useFinder = false;
-        if (getParent() == null || !(getParent() instanceof TerrainQuad)) {
-            if (neighbourFinder == null)
-                return null;
-            else
-                useFinder = true;
-        }
-
-        TerrainQuad pQuad = null;
-        if (!useFinder)
-            pQuad = (TerrainQuad) getParent();
-
-        if (quadrant == 2)
-            return pQuad.getQuad(1);
-        else if (quadrant == 4)
-            return pQuad.getQuad(3);
-        else if (quadrant == 1) {
-            TerrainQuad quad = pQuad.findTopQuad();
-            if (quad != null)
-                return quad.getQuad(2);
-        } else if (quadrant == 3) {
-            TerrainQuad quad = pQuad.findTopQuad();
-            if (quad != null)
-                return quad.getQuad(4);
-        } else if (quadrant == 0) {
-            // at the top quad
-            if (useFinder) {
-                TerrainQuad quad = neighbourFinder.getTopQuad(this);
-                return quad;
-            }
-        }
-
-        return null;
+    	return TerrainNeighbours.findTopQuad(this);
     }
 
     protected TerrainQuad findLeftQuad() {
-        boolean useFinder = false;
-        if (getParent() == null || !(getParent() instanceof TerrainQuad)) {
-            if (neighbourFinder == null)
-                return null;
-            else
-                useFinder = true;
-        }
-
-        TerrainQuad pQuad = null;
-        if (!useFinder)
-            pQuad = (TerrainQuad) getParent();
-
-        if (quadrant == 3)
-            return pQuad.getQuad(1);
-        else if (quadrant == 4)
-            return pQuad.getQuad(2);
-        else if (quadrant == 1) {
-            TerrainQuad quad = pQuad.findLeftQuad();
-            if (quad != null)
-                return quad.getQuad(3);
-        } else if (quadrant == 2) {
-            TerrainQuad quad = pQuad.findLeftQuad();
-            if (quad != null)
-                return quad.getQuad(4);
-        } else if (quadrant == 0) {
-            // at the top quad
-            if (useFinder) {
-                TerrainQuad quad = neighbourFinder.getLeftQuad(this);
-                return quad;
-            }
-        }
-
-        return null;
+    	return TerrainNeighbours.findLeftQuad(this);
     }
 
     /**
@@ -1421,41 +1127,7 @@ public class TerrainQuad extends Node implements Terrain {
      * fix the normals on the edge of the terrain patches.
      */
     protected void fixNormalEdges(BoundingBox affectedArea) {
-        if (children == null)
-            return;
-
-        for (int x = children.size(); --x >= 0;) {
-            Spatial child = children.get(x);
-            if (child instanceof TerrainQuad) {
-                if (affectedArea != null && affectedArea.intersects(((TerrainQuad) child).getWorldBound()) )
-                    ((TerrainQuad) child).fixNormalEdges(affectedArea);
-            } else if (child instanceof TerrainPatch) {
-                if (affectedArea != null && !affectedArea.intersects(((TerrainPatch) child).getWorldBound()) ) // if doesn't intersect, continue
-                    continue;
-
-                TerrainPatch tp = (TerrainPatch) child;
-                TerrainPatch right = findRightPatch(tp);
-                TerrainPatch bottom = findDownPatch(tp);
-                TerrainPatch top = findTopPatch(tp);
-                TerrainPatch left = findLeftPatch(tp);
-                TerrainPatch topLeft = null;
-                if (top != null)
-                    topLeft = findLeftPatch(top);
-                TerrainPatch bottomRight = null;
-                if (right != null)
-                    bottomRight = findDownPatch(right);
-                TerrainPatch topRight = null;
-                if (top != null)
-                    topRight = findRightPatch(top);
-                TerrainPatch bottomLeft = null;
-                if (left != null)
-                    bottomLeft = findDownPatch(left);
-
-                tp.fixNormalEdges(right, bottom, top, left, bottomRight, bottomLeft, topRight, topLeft);
-
-            }
-        } // for each child
-
+    	TerrainNeighbours.fixNormalEdges(affectedArea, this);
     }
 
 

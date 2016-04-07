@@ -15,5 +15,15 @@ public final class Utils {
             quads |= 8;
         return quads;
     }
+    
+    /**
+     * Create just a flat heightmap
+     */
+    public static float[] generateDefaultHeightMap(int size) {
+        float[] heightMap = new float[size*size];
+        return heightMap;
+    }
+    
+
 
 }
