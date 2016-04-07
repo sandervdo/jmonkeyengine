@@ -81,6 +81,8 @@ import java.util.List;
  */
 public class TerrainPatch extends Geometry {
 
+	protected TerrainPatchLod tpLod;
+	
     protected LODGeomap geomap;
     protected int lod = 0; // this terrain patch's LOD
     private int maxLod = -1;
@@ -188,7 +190,8 @@ public class TerrainPatch extends Geometry {
         geomap = new LODGeomap(size, heightMap);
         Mesh m = geomap.createMesh(stepScale, new Vector2f(1,1), offset, offsetAmount, totalSize, false);
         setMesh(m);
-
+        
+        tpLod = new TerrainPatchLod(m);
     }
 
     /**
