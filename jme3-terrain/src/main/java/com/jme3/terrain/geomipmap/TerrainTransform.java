@@ -1,9 +1,15 @@
 package com.jme3.terrain.geomipmap;
 
+import java.util.HashMap;
+import java.util.List;
+
 import com.jme3.collision.CollisionResults;
+import com.jme3.material.Material;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Spatial;
+import com.jme3.terrain.ProgressMonitor;
+import com.jme3.terrain.geomipmap.lodcalc.LodCalculator;
 import com.jme3.terrain.geomipmap.picking.BresenhamTerrainPicker;
 
 public class TerrainTransform {
@@ -40,6 +46,66 @@ public class TerrainTransform {
                 ((TerrainPatch) child).cacheTerrainTransforms();
             }
         }
+    }
+    
+    /**
+     * Generate the entropy values for the terrain for the "perspective" LOD
+     * calculator. This routine can take a long time to run!
+     * @param progressMonitor optional
+     */
+    
+    public static void generateEntropy(ProgressMonitor progressMonitor, TerrainQuad terrainQuad) {
+        // only check this on the root quad
+        if (terrainQuad.isRootQuad())
+            if (progressMonitor != null) {
+                int numCalc = (terrainQuad.getTotalSize()-1)/(terrainQuad.getPatchSize()-1); // make it an even number
+                progressMonitor.setMonitorMax(numCalc*numCalc);
+            }
+
+        if (terrainQuad.getChildren() != null) {
+            for (int i = terrainQuad.getChildren().size(); --i >= 0;) {
+                Spatial child = terrainQuad.getChildren().get(i);
+                if (child instanceof TerrainQuad) {
+                        ((TerrainQuad) child).generateEntropy(progressMonitor);
+                } else if (child instanceof TerrainPatch) {
+                    ((TerrainPatch) child).generateLodEntropies();
+                    if (progressMonitor != null)
+                        progressMonitor.incrementProgress(1);
+                }
+            }
+        }
+
+        // only do this on the root quad
+        if (terrainQuad.isRootQuad())
+            if (progressMonitor != null)
+                progressMonitor.progressComplete();
+    }
+    
+
+    public int getNumMajorSubdivisions() {
+        return 1;
+    }
+    
+    protected static boolean calculateLod(List<Vector3f> location, HashMap<String,UpdatedTerrainPatch> updates, LodCalculator lodCalculator, TerrainQuad terrainQuad) {
+
+        boolean lodChanged = false;
+
+        if (terrainQuad.getChildren() != null) {
+            for (int i = terrainQuad.getChildren().size(); --i >= 0;) {
+                Spatial child = terrainQuad.getChildren().get(i);
+                if (child instanceof TerrainQuad) {
+                    boolean b = calculateLod(location, updates, lodCalculator, ((TerrainQuad) child));
+                    if (b)
+                        lodChanged = true;
+                } else if (child instanceof TerrainPatch) {
+                    boolean b = lodCalculator.calculateLod((TerrainPatch) child, location, updates);
+                    if (b)
+                        lodChanged = true;
+                }
+            }
+        }
+
+        return lodChanged;
     }
 
 }

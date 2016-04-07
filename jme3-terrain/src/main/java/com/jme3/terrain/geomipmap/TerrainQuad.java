@@ -282,6 +282,8 @@ public class TerrainQuad extends Node implements Terrain {
     	return picker;
     }
     
+   
+    
     
 
     /**
@@ -313,30 +315,7 @@ public class TerrainQuad extends Node implements Terrain {
      * @param progressMonitor optional
      */
     public void generateEntropy(ProgressMonitor progressMonitor) {
-        // only check this on the root quad
-        if (isRootQuad())
-            if (progressMonitor != null) {
-                int numCalc = (totalSize-1)/(patchSize-1); // make it an even number
-                progressMonitor.setMonitorMax(numCalc*numCalc);
-            }
-
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial child = children.get(i);
-                if (child instanceof TerrainQuad) {
-                        ((TerrainQuad) child).generateEntropy(progressMonitor);
-                } else if (child instanceof TerrainPatch) {
-                    ((TerrainPatch) child).generateLodEntropies();
-                    if (progressMonitor != null)
-                        progressMonitor.incrementProgress(1);
-                }
-            }
-        }
-
-        // only do this on the root quad
-        if (isRootQuad())
-            if (progressMonitor != null)
-                progressMonitor.progressComplete();
+    	TerrainTransform.generateEntropy(progressMonitor, this);
     }
 
     protected boolean isRootQuad() {
@@ -364,29 +343,6 @@ public class TerrainQuad extends Node implements Terrain {
 
     public int getNumMajorSubdivisions() {
         return 1;
-    }
-    
-
-    protected boolean calculateLod(List<Vector3f> location, HashMap<String,UpdatedTerrainPatch> updates, LodCalculator lodCalculator) {
-
-        boolean lodChanged = false;
-
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial child = children.get(i);
-                if (child instanceof TerrainQuad) {
-                    boolean b = ((TerrainQuad) child).calculateLod(location, updates, lodCalculator);
-                    if (b)
-                        lodChanged = true;
-                } else if (child instanceof TerrainPatch) {
-                    boolean b = lodCalculator.calculateLod((TerrainPatch) child, location, updates);
-                    if (b)
-                        lodChanged = true;
-                }
-            }
-        }
-
-        return lodChanged;
     }
     
 
@@ -1374,5 +1330,6 @@ public class TerrainQuad extends Node implements Terrain {
 
         return hm;
     }
+
 }
 

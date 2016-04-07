@@ -386,7 +386,7 @@ public class TerrainLodControl extends AbstractControl {
             
             // go through each patch and calculate its LOD based on camera distance
             HashMap<String,UpdatedTerrainPatch> updated = new HashMap<String,UpdatedTerrainPatch>();
-            boolean lodChanged = terrainQuad.calculateLod(camLocations, updated, lodCalculator); // 'updated' gets populated here
+            boolean lodChanged = TerrainTransform.calculateLod(camLocations, updated, lodCalculator, terrainQuad); // 'updated' gets populated here
 
             if (!lodChanged) {
                 // not worth updating anything else since no one's LOD changed
