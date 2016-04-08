@@ -4,12 +4,22 @@ package jme3.terrain.geomipmap;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
+import com.jme3.collision.CollisionResults;
+import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
+import com.jme3.terrain.ProgressMonitor;
 import com.jme3.terrain.geomipmap.TerrainQuad;
+import com.jme3.terrain.geomipmap.TerrainTransform;
+import com.jme3.terrain.geomipmap.UpdatedTerrainPatch;
+import com.jme3.terrain.geomipmap.lodcalc.LodCalculator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.spy;
@@ -19,6 +29,8 @@ import static org.mockito.Mockito.verify;
 public class TerrainQuadTest {
 	
 	TerrainQuad tquad;
+	Vector3f zero3f; 
+	Vector2f zero2f;
 
 	
 	
@@ -29,11 +41,11 @@ public class TerrainQuadTest {
 	@Before
 	public void setTerrainQuad() {
 		float heightMap[] = new float[16641];
-		Vector3f scale = new Vector3f(0.0f, 0.0f, 0.0f);
-		Vector2f offset = new Vector2f(0.0f, 0.0f);
+		zero3f = new Vector3f(0.0f, 0.0f, 0.0f);
+		zero2f = new Vector2f(0.0f, 0.0f);
 		tquad = new TerrainQuad("QuadTest", 65, 129,
-                            scale, heightMap, 513,
-                            offset, 192.0f);
+                            zero3f, heightMap, 513,
+                            zero2f, 192.0f);
 		
 	}
 	
@@ -58,12 +70,30 @@ public class TerrainQuadTest {
 		assert(tquad.getChild(7).getName() == "Quad4");
 	}
 	
-	// Check if it actually has effect.
+	// Should return either 1 or 0.
+	
+	@Test 
+	public void testCollideWithRay() {
+		Ray ray = new Ray();
+		ray.setDirection(zero3f);
+		CollisionResults collResults = new CollisionResults();
+		int ret = TerrainTransform.collideWithRay(ray, collResults, tquad);
+		assert(ret == 0 || ret == 1);
+	}
+	
+	@Test
+	public void testCalculateLod() {
+		
+		
+	}
+	
+
 	
 	@Test 
 	public void checkGenerateEntropy() {
-		ProgressMonitor progmonitor = new ProgressMonitor();
-		
+		ProgressMonitor progMonitor = null;
+		TerrainTransform.generateEntropy(progMonitor, tquad);
+		// This is hard to test as it is a recursive function that does modify progressmonitor which is really difficult to initiate. But it should execute in this scenario so it is a small test.
 	}
 	
 	

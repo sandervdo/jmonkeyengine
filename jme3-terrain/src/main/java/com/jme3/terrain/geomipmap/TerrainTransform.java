@@ -20,7 +20,6 @@ public class TerrainTransform {
      */
 	
     public static int collideWithRay(Ray ray, CollisionResults results, TerrainQuad terrainQuad) {
-    	System.out.println("hoi");
         if (terrainQuad.getPicker() == null)
             terrainQuad.setPicker(new BresenhamTerrainPicker(terrainQuad));
 
@@ -82,10 +81,6 @@ public class TerrainTransform {
                 progressMonitor.progressComplete();
     }
     
-
-    public int getNumMajorSubdivisions() {
-        return 1;
-    }
     
     protected static boolean calculateLod(List<Vector3f> location, HashMap<String,UpdatedTerrainPatch> updates, LodCalculator lodCalculator, TerrainQuad terrainQuad) {
 

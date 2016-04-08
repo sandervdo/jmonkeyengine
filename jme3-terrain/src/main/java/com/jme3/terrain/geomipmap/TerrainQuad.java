@@ -283,6 +283,23 @@ public class TerrainQuad extends Node implements Terrain {
     	return picker;
     }
     
+    public BoundingBox getAffectedAreaBBox() {
+    	return this.affectedAreaBBox;
+    }
+    
+    public void setAffectedAreaBBox(BoundingBox bb) {
+    	this.affectedAreaBBox = bb;
+    }
+    
+    public Vector3f getLastScale() {
+    	return this.lastScale;
+    }
+    
+    public void setLastScale(Vector3f ls) {
+    	this.lastScale = ls;
+    }
+    
+    
    
     
     
@@ -291,16 +308,7 @@ public class TerrainQuad extends Node implements Terrain {
      * update the normals if there were any height changes recently.
      * Should only be called on the root quad
      */
-    protected void updateNormals() {
 
-        if (needToRecalculateNormals()) {
-            //TODO background-thread this if it ends up being expensive
-            fixNormals(affectedAreaBBox); // the affected patches
-            fixNormalEdges(affectedAreaBBox); // the edges between the patches
-            
-            setNormalRecalcNeeded(null); // set to false
-        }
-    }
     
     /**
      * Caches the transforms (except rotation) so the LOD calculator,
@@ -633,39 +641,6 @@ public class TerrainQuad extends Node implements Terrain {
         g.setLocalTranslation(bb.getCenter());
         parent.attachChild(g);
     }
-
-    /**
-     * Signal if the normal vectors for the terrain need to be recalculated.
-     * Does this by looking at the affectedAreaBBox bounding box. If the bbox
-     * exists already, then it will grow the box to fit the new changedPoint.
-     * If the affectedAreaBBox is null, then it will create one of unit size.
-     *
-     * @param needToRecalculateNormals if null, will cause needToRecalculateNormals() to return false
-     */
-    protected void setNormalRecalcNeeded(Vector2f changedPoint) {
-        if (changedPoint == null) { // set needToRecalculateNormals() to false
-            affectedAreaBBox = null;
-            return;
-        }
-
-        if (affectedAreaBBox == null) {
-            affectedAreaBBox = new BoundingBox(new Vector3f(changedPoint.x, 0, changedPoint.y), 1f, Float.MAX_VALUE, 1f); // unit length
-        } else {
-            // adjust size of box to be larger
-            affectedAreaBBox.mergeLocal(new BoundingBox(new Vector3f(changedPoint.x, 0, changedPoint.y), 1f, Float.MAX_VALUE, 1f));
-        }
-    }
-
-    protected boolean needToRecalculateNormals() {
-        if (affectedAreaBBox != null)
-            return true;
-        if (!lastScale.equals(getWorldScale())) {
-            affectedAreaBBox = new BoundingBox(getWorldTranslation(), Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
-            lastScale = getWorldScale();
-            return true;
-        }
-        return false;
-    }
     
     /**
      * This will cause all normals for this terrain quad to be recalculated
@@ -836,7 +811,7 @@ public class TerrainQuad extends Node implements Terrain {
 
         // signal that the normals need updating
         for (int i=0; i<xz.size(); i++)
-            setNormalRecalcNeeded(xz.get(i) );
+            TerrainModifyNormals.setNormalRecalcNeeded(xz.get(i), this );
     }
 
     protected class LocationHeight {
@@ -1027,27 +1002,6 @@ public class TerrainQuad extends Node implements Terrain {
     	return TerrainNeighbours.findLeftQuad(this);
     }
 
-    /**
-     * Find what terrain patches need normal recalculations and update
-     * their normals;
-     */
-    protected void fixNormals(BoundingBox affectedArea) {
-        if (children == null)
-            return;
-
-        // go through the children and see if they collide with the affectedAreaBBox
-        // if they do, then update their normals
-        for (int x = children.size(); --x >= 0;) {
-            Spatial child = children.get(x);
-            if (child instanceof TerrainQuad) {
-                if (affectedArea != null && affectedArea.intersects(((TerrainQuad) child).getWorldBound()) )
-                    ((TerrainQuad) child).fixNormals(affectedArea);
-            } else if (child instanceof TerrainPatch) {
-                if (affectedArea != null && affectedArea.intersects(((TerrainPatch) child).getWorldBound()) )
-                    ((TerrainPatch) child).updateNormals(); // recalculate the patch's normals
-            }
-        }
-    }
 
     /**
      * fix the normals on the edge of the terrain patches.
@@ -1157,7 +1111,7 @@ public class TerrainQuad extends Node implements Terrain {
         if ( !(getParent() instanceof TerrainQuad) ) {
             BoundingBox all = new BoundingBox(getWorldTranslation(), totalSize, totalSize, totalSize);
             affectedAreaBBox = all;
-            updateNormals();
+            TerrainModifyNormals.updateNormals(this);
         }
     }
 
