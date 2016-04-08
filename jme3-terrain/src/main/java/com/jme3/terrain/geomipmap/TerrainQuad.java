@@ -214,11 +214,12 @@ public class TerrainQuad extends Node implements Terrain {
     }
     
 
-    protected TerrainQuad(String name, int patchSize, int quadSize,
+    public TerrainQuad(String name, int patchSize, int quadSize,
                             Vector3f scale, float[] heightMap, int totalSize,
                             Vector2f offset, float offsetAmount)
     {
-        super(name);
+    	
+        super(name);        
         
         if (heightMap == null)
             heightMap = Utils.generateDefaultHeightMap(quadSize);
@@ -426,10 +427,8 @@ public class TerrainQuad extends Node implements Terrain {
         this.attachChild(quad);
     }
     
-
     
-    
-    protected void createQuad(int blockSize, float[] heightMap) {
+    public void createQuad(int blockSize, float[] heightMap) {
         // create 4 terrain quads
         int quarterSize = size >> 2;
 

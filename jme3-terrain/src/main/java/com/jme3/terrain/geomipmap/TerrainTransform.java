@@ -20,6 +20,7 @@ public class TerrainTransform {
      */
 	
     public static int collideWithRay(Ray ray, CollisionResults results, TerrainQuad terrainQuad) {
+    	System.out.println("hoi");
         if (terrainQuad.getPicker() == null)
             terrainQuad.setPicker(new BresenhamTerrainPicker(terrainQuad));
 
