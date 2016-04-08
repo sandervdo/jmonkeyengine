@@ -1,13 +1,12 @@
-package jme3.terrain.geomipmap;
-
-
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
+import com.jme3.terrain.ProgressMonitor;
 import com.jme3.terrain.geomipmap.TerrainQuad;
+import com.jme3.terrain.geomipmap.TerrainTransform;
 
 import java.util.ArrayList;
 
@@ -36,6 +35,7 @@ public class TerrainQuadTest {
                             offset, 192.0f);
 		
 	}
+		
 	
 	// Test if there are 4 children created, it starts off with 4 so should be 8.
 	
@@ -62,8 +62,10 @@ public class TerrainQuadTest {
 	
 	@Test 
 	public void checkGenerateEntropy() {
-		ProgressMonitor progmonitor = new ProgressMonitor();
-		
+		// If progress monitor is null then it is not the root node. 
+		ProgressMonitor progmonitor = null;
+		TerrainTransform.generateEntropy(progmonitor, tquad);
+		assert(1 == 1);
 	}
 	
 	

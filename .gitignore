@@ -1030,3 +1030,4 @@ jme3-testdata/bin/Materials/Tess/SimpleTess.j3md
 jme3-testdata/bin/Materials/Tess/SimpleTess.tsctrl
 jme3-testdata/bin/Materials/Tess/SimpleTess.tseval
 jme3-testdata/bin/Materials/Tess/SimpleTess.vert
+*.prefs
