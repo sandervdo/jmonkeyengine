@@ -5,6 +5,8 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import com.jme3.math.FastMath;
+import com.jme3.math.Vector2f;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.mesh.IndexBuffer;
 import com.jme3.terrain.geomipmap.lodcalc.util.EntropyComputeUtil;
@@ -19,9 +21,13 @@ public class TerrainPatchLod {
     
     protected int size, totalSize;
     private Mesh mesh;
+    protected float[] heightMap;
     
-    public TerrainPatchLod(Mesh mesh) {
-    	this.mesh = mesh;
+    public TerrainPatchLod(int size, int totalSize, float[] heightMap, Vector3f stepScale, Vector2f offset, float offsetAmount) {
+    	this.size = size;
+    	this.heightMap = heightMap;
+    	this.geomap = new LODGeomap(size, heightMap);
+    	this.mesh = geomap.createMesh(stepScale, new Vector2f(1,1), offset, offsetAmount, totalSize, false);
     }
     
     /**
@@ -62,6 +68,10 @@ public class TerrainPatchLod {
             maxLod = Math.max(1, (int) (FastMath.log(size-1)/FastMath.log(2)) -1); // -1 forces our minimum of 4 triangles wide
 
         return maxLod;
+    }
+    
+    public void setMaxLod(int maxLod) {
+    	this.maxLod = maxLod;
     }
     
     public int getLod() {
@@ -111,4 +121,20 @@ public class TerrainPatchLod {
     protected void setLodBottom(int lodBottom) {
         this.lodBottom = lodBottom;
     }
-}
+    
+    public Mesh getMesh() {
+    	return this.mesh;
+    }
+    
+    public LODGeomap getLODGeomap() {
+    	return this.geomap;
+    }
+    
+    public void setLodEntropies(float[] entropies) {
+    	this.lodEntropy = entropies;
+	}
+    
+    public void setLODGeomap(LODGeomap geomap) {
+    	this.geomap = geomap;
+    }
+ }
