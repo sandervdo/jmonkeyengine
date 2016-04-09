@@ -81,14 +81,9 @@ import java.util.List;
  */
 public class TerrainPatch extends Geometry {
 
-    protected LODGeomap geomap;
-    protected int lod = 0; // this terrain patch's LOD
-    private int maxLod = -1;
-    protected int previousLod = -1;
-    protected int lodLeft, lodTop, lodRight, lodBottom; // it's neighbour's LODs
+	protected TerrainPatchLod tpLod;
 
     protected int size;
-
     protected int totalSize;
 
     protected short quadrant = 1;
@@ -111,8 +106,6 @@ public class TerrainPatch extends Geometry {
     // these two vectors are calculated on the GL thread, but used in the outside LOD thread
     protected Vector3f worldTranslationCached;
     protected Vector3f worldScaleCached;
-
-    protected float[] lodEntropy;
 
     public TerrainPatch() {
         super("TerrainPatch");
@@ -185,10 +178,8 @@ public class TerrainPatch extends Geometry {
 
         setLocalTranslation(origin);
 
-        geomap = new LODGeomap(size, heightMap);
-        Mesh m = geomap.createMesh(stepScale, new Vector2f(1,1), offset, offsetAmount, totalSize, false);
-        setMesh(m);
-
+        this.tpLod = new TerrainPatchLod(size, totalSize, heightMap, stepScale, offset, offsetAmount);
+        setMesh(this.tpLod.getMesh());
     }
 
     /**
@@ -198,7 +189,7 @@ public class TerrainPatch extends Geometry {
         float[] entropies = new float[getMaxLod()+1];
         for (int i = 0; i <= getMaxLod(); i++){
             int curLod = (int) Math.pow(2, i);
-            IndexBuffer idxB = geomap.writeIndexArrayLodDiff(curLod, false, false, false, false, totalSize);
+            IndexBuffer idxB = tpLod.getLODGeomap().writeIndexArrayLodDiff(curLod, false, false, false, false, totalSize);
             Buffer ib;
             if (idxB.getBuffer() instanceof IntBuffer)
                 ib = (IntBuffer)idxB.getBuffer();
@@ -207,23 +198,23 @@ public class TerrainPatch extends Geometry {
             entropies[i] = EntropyComputeUtil.computeLodEntropy(mesh, ib);
         }
 
-        lodEntropy = entropies;
+        tpLod.lodEntropy = entropies;
     }
 
     public float[] getLodEntropies(){
-        if (lodEntropy == null){
+        if (tpLod.lodEntropy == null){
             generateLodEntropies();
         }
-        return lodEntropy;
+        return tpLod.lodEntropy;
     }
 
     @Deprecated
     public FloatBuffer getHeightmap() {
-        return BufferUtils.createFloatBuffer(geomap.getHeightArray());
+        return BufferUtils.createFloatBuffer(tpLod.getLODGeomap().getHeightArray());
     }
     
     public float[] getHeightMap() {
-        return geomap.getHeightArray();
+        return tpLod.getLODGeomap().getHeightArray();
     }
 
     /**
@@ -234,10 +225,10 @@ public class TerrainPatch extends Geometry {
      * @return the maximum LOD
      */
     public int getMaxLod() {
-        if (maxLod < 0)
-            maxLod = Math.max(1, (int) (FastMath.log(size-1)/FastMath.log(2)) -1); // -1 forces our minimum of 4 triangles wide
+        if (tpLod.getMaxLod() < 0)
+            tpLod.setMaxLod(Math.max(1, (int) (FastMath.log(size-1)/FastMath.log(2)) -1)); // -1 forces our minimum of 4 triangles wide
 
-        return maxLod;
+        return tpLod.getMaxLod();
     }
 
     protected void reIndexGeometry(HashMap<String,UpdatedTerrainPatch> updated, boolean useVariableLod) {
@@ -253,9 +244,9 @@ public class TerrainPatch extends Geometry {
 
             IndexBuffer idxB;
             if (useVariableLod)
-                idxB = geomap.writeIndexArrayLodVariable(pow, (int) Math.pow(2, utp.getRightLod()), (int) Math.pow(2, utp.getTopLod()), (int) Math.pow(2, utp.getLeftLod()), (int) Math.pow(2, utp.getBottomLod()), totalSize);
+                idxB = tpLod.getLODGeomap().writeIndexArrayLodVariable(pow, (int) Math.pow(2, utp.getRightLod()), (int) Math.pow(2, utp.getTopLod()), (int) Math.pow(2, utp.getLeftLod()), (int) Math.pow(2, utp.getBottomLod()), totalSize);
             else
-                idxB = geomap.writeIndexArrayLodDiff(pow, right, top, left, bottom, totalSize);
+                idxB = tpLod.getLODGeomap().writeIndexArrayLodDiff(pow, right, top, left, bottom, totalSize);
             
             Buffer b;
             if (idxB.getBuffer() instanceof IntBuffer)
@@ -292,7 +283,7 @@ public class TerrainPatch extends Geometry {
      * @return the triangle in world coordinates, or null if the point does intersect this patch on the XZ axis
      */
     public Triangle getTriangle(float x, float z) {
-        return geomap.getTriangleAtPoint(x, z, getWorldScale() , getWorldTranslation());
+        return tpLod.getLODGeomap().getTriangleAtPoint(x, z, getWorldScale() , getWorldTranslation());
     }
 
     /**
@@ -302,7 +293,7 @@ public class TerrainPatch extends Geometry {
      * @return the triangles in world coordinates, or null if the point does intersect this patch on the XZ axis
      */
     public Triangle[] getGridTriangles(float x, float z) {
-        return geomap.getGridTrianglesAtPoint(x, z, getWorldScale() , getWorldTranslation());
+        return tpLod.getLODGeomap().getGridTrianglesAtPoint(x, z, getWorldScale() , getWorldTranslation());
     }
 
     protected void setHeight(List<LocationHeight> locationHeights, boolean overrideHeight) {
@@ -312,15 +303,15 @@ public class TerrainPatch extends Geometry {
                 continue;
             int idx = lh.z * size + lh.x;
             if (overrideHeight) {
-                geomap.getHeightArray()[idx] = lh.h;
+            	tpLod.getLODGeomap().getHeightArray()[idx] = lh.h;
             } else {
                 float h = getMesh().getFloatBuffer(Type.Position).get(idx*3+1);
-                geomap.getHeightArray()[idx] = h+lh.h;
+                tpLod.getLODGeomap().getHeightArray()[idx] = h+lh.h;
             }
             
         }
 
-        FloatBuffer newVertexBuffer = geomap.writeVertexArray(null, stepScale, false);
+        FloatBuffer newVertexBuffer = tpLod.getLODGeomap().writeVertexArray(null, stepScale, false);
         getMesh().clearBuffer(Type.Position);
         getMesh().setBuffer(Type.Position, 3, newVertexBuffer);
     }
@@ -329,11 +320,11 @@ public class TerrainPatch extends Geometry {
      * recalculate all of the normal vectors in this terrain patch
      */
     protected void updateNormals() {
-        FloatBuffer newNormalBuffer = geomap.writeNormalArray(null, getWorldScale());
+        FloatBuffer newNormalBuffer = tpLod.getLODGeomap().writeNormalArray(null, getWorldScale());
         getMesh().getBuffer(Type.Normal).updateData(newNormalBuffer);
         FloatBuffer newTangentBuffer = null;
         FloatBuffer newBinormalBuffer = null;
-        FloatBuffer[] tb = geomap.writeTangentArray(newNormalBuffer, newTangentBuffer, newBinormalBuffer, (FloatBuffer)getMesh().getBuffer(Type.TexCoord).getData(), getWorldScale());
+        FloatBuffer[] tb = tpLod.getLODGeomap().writeTangentArray(newNormalBuffer, newTangentBuffer, newBinormalBuffer, (FloatBuffer)getMesh().getBuffer(Type.TexCoord).getData(), getWorldScale());
         newTangentBuffer = tb[0];
         newBinormalBuffer = tb[1];
         getMesh().getBuffer(Type.Tangent).updateData(newTangentBuffer);
@@ -505,7 +496,7 @@ public class TerrainPatch extends Geometry {
     }
 
     protected float getHeight(int x, int z, float xm, float zm) {
-        return geomap.getHeight(x,z,xm,zm);
+        return tpLod.getLODGeomap().getHeight(x,z,xm,zm);
     }
     
     /**
@@ -594,7 +585,7 @@ public class TerrainPatch extends Geometry {
     public void setSize(int size) {
         this.size = size;
 
-        maxLod = -1; // reset it
+        tpLod.setMaxLod(-1); // reset it
     }
 
     /**
@@ -649,51 +640,51 @@ public class TerrainPatch extends Geometry {
     }
 
     public int getLod() {
-        return lod;
+        return tpLod.getLod();
     }
 
     public void setLod(int lod) {
-        this.lod = lod;
+        tpLod.setLod(lod);
     }
 
     public int getPreviousLod() {
-        return previousLod;
+        return tpLod.getPreviousLod();
     }
 
     public void setPreviousLod(int previousLod) {
-        this.previousLod = previousLod;
+        tpLod.setPreviousLod(previousLod);
     }
 
     protected int getLodLeft() {
-        return lodLeft;
+        return tpLod.getLodLeft();
     }
 
     protected void setLodLeft(int lodLeft) {
-        this.lodLeft = lodLeft;
+        tpLod.setLodLeft(lodLeft);
     }
 
     protected int getLodTop() {
-        return lodTop;
+        return tpLod.getLodTop();
     }
 
     protected void setLodTop(int lodTop) {
-        this.lodTop = lodTop;
+        tpLod.setLodTop(lodTop);
     }
 
     protected int getLodRight() {
-        return lodRight;
+        return tpLod.getLodRight();
     }
 
     protected void setLodRight(int lodRight) {
-        this.lodRight = lodRight;
+        tpLod.setLodRight(lodRight);
     }
 
     protected int getLodBottom() {
-        return lodBottom;
+        return tpLod.getLodBottom();
     }
 
     protected void setLodBottom(int lodBottom) {
-        this.lodBottom = lodBottom;
+        tpLod.setLodBottom(lodBottom);
     }
     
     /*public void setLodCalculator(LodCalculatorFactory lodCalculatorFactory) {
@@ -804,8 +795,8 @@ public class TerrainPatch extends Geometry {
         oc.write(offsetAmount, "offsetAmount", 0);
         //oc.write(lodCalculator, "lodCalculator", null);
         //oc.write(lodCalculatorFactory, "lodCalculatorFactory", null);
-        oc.write(lodEntropy, "lodEntropy", null);
-        oc.write(geomap, "geomap", null);
+        oc.write(tpLod.getLodEntropies(), "lodEntropy", null);
+        oc.write(tpLod.getLODGeomap(), "geomap", null);
         
         setMesh(temp);
     }
@@ -823,10 +814,10 @@ public class TerrainPatch extends Geometry {
         //lodCalculator = (LodCalculator) ic.readSavable("lodCalculator", new DistanceLodCalculator());
         //lodCalculator.setTerrainPatch(this);
         //lodCalculatorFactory = (LodCalculatorFactory) ic.readSavable("lodCalculatorFactory", null);
-        lodEntropy = ic.readFloatArray("lodEntropy", null);
-        geomap = (LODGeomap) ic.readSavable("geomap", null);
+        tpLod.setLodEntropies(ic.readFloatArray("lodEntropy", null));
+        tpLod.setLODGeomap((LODGeomap) ic.readSavable("geomap", null));
         
-        Mesh regen = geomap.createMesh(stepScale, new Vector2f(1,1), offset, offsetAmount, totalSize, false);
+        Mesh regen = tpLod.getLODGeomap().createMesh(stepScale, new Vector2f(1,1), offset, offsetAmount, totalSize, false);
         setMesh(regen);
         //TangentBinormalGenerator.generate(this); // note that this will be removed
         ensurePositiveVolumeBBox();
@@ -845,10 +836,11 @@ public class TerrainPatch extends Geometry {
         //clone.lodCalculator = lodCalculator.clone();
         //clone.lodCalculator.setTerrainPatch(clone);
         //clone.setLodCalculator(lodCalculatorFactory.clone());
-        clone.geomap = new LODGeomap(size, geomap.getHeightArray());
+//        clone.geomap = new LODGeomap(size, geomap.getHeightArray());
+        clone.tpLod = new TerrainPatchLod(clone.tpLod.size, clone.tpLod.totalSize, clone.tpLod.heightMap, stepScale, offset, offsetAmount);
         clone.setLocalTranslation(getLocalTranslation().clone());
-        Mesh m = clone.geomap.createMesh(clone.stepScale, Vector2f.UNIT_XY, clone.offset, clone.offsetAmount, clone.totalSize, false);
-        clone.setMesh(m);
+//        Mesh m = clone.geomap.createMesh(clone.stepScale, Vector2f.UNIT_XY, clone.offset, clone.offsetAmount, clone.totalSize, false);
+//        clone.setMesh(m);
         clone.setMaterial(material.clone());
         return clone;
     }
