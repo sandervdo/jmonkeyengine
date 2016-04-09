@@ -183,5 +183,65 @@ public  class TerrainHeight {
                 ((TerrainPatch)quad4).setHeight(quadLH4, overrideHeight);
         }
     }
+    
+    public static float[] getHeightMap(TerrainQuad tq) {
+
+        float[] hm = null;
+        int length = ((tq.getSize()-1)/2)+1;
+        int area = tq.getSize()*tq.getSize();
+        hm = new float[area];
+
+        if (tq.getChildren() != null && !tq.getChildren().isEmpty()) {
+            float[] ul=null, ur=null, bl=null, br=null;
+            // get the child heightmaps
+            if (tq.getChild(0) instanceof TerrainPatch) {
+                for (Spatial s : tq.getChildren()) {
+                    if ( ((TerrainPatch)s).getQuadrant() == 1)
+                        ul = ((TerrainPatch)s).getHeightMap();
+                    else if(((TerrainPatch) s).getQuadrant() == 2)
+                        bl = ((TerrainPatch)s).getHeightMap();
+                    else if(((TerrainPatch) s).getQuadrant() == 3)
+                        ur = ((TerrainPatch)s).getHeightMap();
+                    else if(((TerrainPatch) s).getQuadrant() == 4)
+                        br = ((TerrainPatch)s).getHeightMap();
+                }
+            }
+            else {
+                ul = tq.getQuad(1).getHeightMap();
+                bl = tq.getQuad(2).getHeightMap();
+                ur = tq.getQuad(3).getHeightMap();
+                br = tq.getQuad(4).getHeightMap();
+            }
+
+            // combine them into a single heightmap
+
+
+            // first upper blocks
+            for (int y=0; y<length; y++) { // rows
+                for (int x1=0; x1<length; x1++) {
+                    int row = y*tq.getSize();
+                    hm[row+x1] = ul[y*length+x1];
+                }
+                for (int x2=1; x2<length; x2++) {
+                    int row = y*tq.getSize() + length;
+                    hm[row+x2-1] = ur[y*length + x2];
+                }
+            }
+            // second lower blocks
+            int rowOffset = tq.getSize()*length;
+            for (int y=1; y<length; y++) { // rows
+                for (int x1=0; x1<length; x1++) {
+                    int row = (y-1)*tq.getSize();
+                    hm[rowOffset+row+x1] = bl[y*length+x1];
+                }
+                for (int x2=1; x2<length; x2++) {
+                    int row = (y-1)*tq.getSize() + length;
+                    hm[rowOffset+row+x2-1] = br[y*length + x2];
+                }
+            }
+        }
+
+        return hm;
+    }
   
 }

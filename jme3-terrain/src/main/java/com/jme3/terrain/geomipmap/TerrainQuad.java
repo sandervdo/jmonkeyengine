@@ -321,6 +321,21 @@ public class TerrainQuad extends Node implements Terrain {
         return totalSize;
     }
     
+    public int getMaxLod() {
+        if (maxLod < 0)
+            maxLod = Math.max(1, (int) (FastMath.log(size-1)/FastMath.log(2)) -1); // -1 forces our minimum of 4 triangles wide
+
+        return maxLod;
+    }
+
+    public int getPatchSize() {
+        return patchSize;
+    }
+
+    public int getTotalSize() {
+        return totalSize;
+    }
+    
     /**
      * Generate the entropy values for the terrain for the "perspective" LOD
      * calculator. This routine can take a long time to run!
@@ -769,79 +784,10 @@ public class TerrainQuad extends Node implements Terrain {
         }
     }
     
-    public int getMaxLod() {
-        if (maxLod < 0)
-            maxLod = Math.max(1, (int) (FastMath.log(size-1)/FastMath.log(2)) -1); // -1 forces our minimum of 4 triangles wide
 
-        return maxLod;
-    }
-
-    public int getPatchSize() {
-        return patchSize;
-    }
-
-    public int getTotalSize() {
-        return totalSize;
-    }
 
     public float[] getHeightMap() {
-
-        float[] hm = null;
-        int length = ((size-1)/2)+1;
-        int area = size*size;
-        hm = new float[area];
-
-        if (getChildren() != null && !getChildren().isEmpty()) {
-            float[] ul=null, ur=null, bl=null, br=null;
-            // get the child heightmaps
-            if (getChild(0) instanceof TerrainPatch) {
-                for (Spatial s : getChildren()) {
-                    if ( ((TerrainPatch)s).getQuadrant() == 1)
-                        ul = ((TerrainPatch)s).getHeightMap();
-                    else if(((TerrainPatch) s).getQuadrant() == 2)
-                        bl = ((TerrainPatch)s).getHeightMap();
-                    else if(((TerrainPatch) s).getQuadrant() == 3)
-                        ur = ((TerrainPatch)s).getHeightMap();
-                    else if(((TerrainPatch) s).getQuadrant() == 4)
-                        br = ((TerrainPatch)s).getHeightMap();
-                }
-            }
-            else {
-                ul = getQuad(1).getHeightMap();
-                bl = getQuad(2).getHeightMap();
-                ur = getQuad(3).getHeightMap();
-                br = getQuad(4).getHeightMap();
-            }
-
-            // combine them into a single heightmap
-
-
-            // first upper blocks
-            for (int y=0; y<length; y++) { // rows
-                for (int x1=0; x1<length; x1++) {
-                    int row = y*size;
-                    hm[row+x1] = ul[y*length+x1];
-                }
-                for (int x2=1; x2<length; x2++) {
-                    int row = y*size + length;
-                    hm[row+x2-1] = ur[y*length + x2];
-                }
-            }
-            // second lower blocks
-            int rowOffset = size*length;
-            for (int y=1; y<length; y++) { // rows
-                for (int x1=0; x1<length; x1++) {
-                    int row = (y-1)*size;
-                    hm[rowOffset+row+x1] = bl[y*length+x1];
-                }
-                for (int x2=1; x2<length; x2++) {
-                    int row = (y-1)*size + length;
-                    hm[rowOffset+row+x2-1] = br[y*length + x2];
-                }
-            }
-        }
-
-        return hm;
+    	return TerrainHeight.getHeightMap(this);
     }
 
 }
