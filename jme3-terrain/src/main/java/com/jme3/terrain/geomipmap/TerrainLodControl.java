@@ -396,11 +396,11 @@ public class TerrainLodControl extends AbstractControl {
             
             
             // then calculate its neighbour LOD values for seaming in the shader
-            terrainQuad.findNeighboursLod(updated);
+            TerrainQuadrants.findNeighboursLod(updated, terrainQuad);
 
-            terrainQuad.fixEdges(updated); // 'updated' can get added to here
+            TerrainQuadrants.fixEdges(updated, terrainQuad); // 'updated' can get added to here
 
-            terrainQuad.reIndexPages(updated, lodCalculator.usesVariableLod());
+            TerrainTransform.reIndexPages(updated, lodCalculator.usesVariableLod(), terrainQuad);
 
             //setUpdateQuadLODs(updated); // set back to main ogl thread
 

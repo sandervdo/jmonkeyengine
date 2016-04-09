@@ -231,15 +231,13 @@ public class TerrainQuad extends Node implements Terrain {
             Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Heightmap size is larger than the terrain size. Make sure your heightmap image is the same size as the terrain!");
         }
         
-        TerrainQuadObject quadObj = new TerrainQuadObject();
-        
         this.offset = offset;
         this.offsetAmount = offsetAmount;
         this.totalSize = totalSize;
         this.size = quadSize;
         this.patchSize = patchSize;
         this.stepScale = scale;
-        split(patchSize, heightMap);
+        TerrainCreatePatch.split(patchSize, heightMap, this);
     }
 
     public void setNeighbourFinder(NeighbourFinder neighbourFinder) {
@@ -295,33 +293,35 @@ public class TerrainQuad extends Node implements Terrain {
     	return this.lastScale;
     }
     
+    public Vector3f getStepScale() {
+    	return this.stepScale;
+    }
+    
     public void setLastScale(Vector3f ls) {
     	this.lastScale = ls;
     }
     
-    
-   
-    
-    
-
-    /**
-     * update the normals if there were any height changes recently.
-     * Should only be called on the root quad
-     */
-
-    
-    /**
-     * Caches the transforms (except rotation) so the LOD calculator,
-     * which runs on a separate thread, can access them safely.
-     */
-    protected void cacheTerrainTransforms() {
-    	TerrainTransform.cacheTerrainTransforms(this);
+    public int getSize() {
+    	return this.size;
     }
-
+    
+    public float getOffsetAmount() {
+    	return this.offsetAmount;
+    }
+    
+    public void setOffsetAmount(float os) {
+    	this.offsetAmount = os;
+    }
+    
+    public Vector2f getOffSet() {
+    	return this.offset;
+    }
+    
     /**
      * Generate the entropy values for the terrain for the "perspective" LOD
      * calculator. This routine can take a long time to run!
      * @param progressMonitor optional
+     * Jorden: I can't remove this
      */
     public void generateEntropy(ProgressMonitor progressMonitor) {
     	TerrainTransform.generateEntropy(progressMonitor, this);
@@ -355,143 +355,8 @@ public class TerrainQuad extends Node implements Terrain {
     }
     
 
-    protected synchronized void findNeighboursLod(HashMap<String,UpdatedTerrainPatch> updated) {
-    	TerrainNeighbours.findNeighboursLod(updated, this);
-    }
 
 
-    
-    /**
-     * Find any neighbours that should have their edges seamed because another neighbour
-     * changed its LOD to a greater value (less detailed)
-     */
-    protected synchronized void fixEdges(HashMap<String,UpdatedTerrainPatch> updated) {
-    	TerrainNeighbours.fixEdges(updated, this);
-    }
-
-    protected synchronized void reIndexPages(HashMap<String,UpdatedTerrainPatch> updated, boolean usesVariableLod) {
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial child = children.get(i);
-                if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).reIndexPages(updated, usesVariableLod);
-                } else if (child instanceof TerrainPatch) {
-                    ((TerrainPatch) child).reIndexGeometry(updated, usesVariableLod);
-                }
-            }
-        }
-    }
-
-    /**
-     * <code>split</code> divides the heightmap data for four children. The
-     * children are either quads or patches. This is dependent on the size of the
-     * children. If the child's size is less than or equal to the set block
-     * size, then patches are created, otherwise, quads are created.
-     *
-     * @param blockSize
-     *			the blocks size to test against.
-     * @param heightMap
-     *			the height data.
-     */
-    protected void split(int blockSize, float[] heightMap) {
-        if ((size >> 1) + 1 <= blockSize) {
-            createQuadPatch(heightMap);
-        } else {
-            createQuad(blockSize, heightMap);
-        }
-
-    }
-
-    /**
-     * Quadrants, world coordinates, and heightmap coordinates (Y-up):
-     * 
-     *         -z
-     *      -u | 
-     *    -v  1|3 
-     *  -x ----+---- x
-     *        2|4 u
-     *         | v
-     *         z
-     * <code>createQuad</code> generates four new quads from this quad.
-     * The heightmap's top left (0,0) coordinate is at the bottom, -x,-z
-     * coordinate of the terrain, so it grows in the positive x.z direction.
-     */
-    
-    protected void setDefaultOffset(Vector2f tempOffset, Vector3f origin) {
-    	tempOffset = new Vector2f();
-    	tempOffset.x = offset.x;
-    	tempOffset.y = offset.y;
-    	tempOffset.x += origin.x;
-    	tempOffset.y += origin.z;
-    }
-    
-    protected  void attachQuad(float[] heightBlock, Vector3f origin, Vector2f tempOffset, int quaddrant, String name, int split, int blockSize) {	
-    	TerrainQuad quad = new TerrainQuad(getName() + name, blockSize,
-                split, stepScale, heightBlock, totalSize, tempOffset,
-                offsetAmount);
-    	
-    	quad.setLocalTranslation(origin);
-        quad.quadrant = quaddrant;
-        this.attachChild(quad);
-    }
-    
-    
-    public void createQuad(int blockSize, float[] heightMap) {
-        // create 4 terrain quads
-        int quarterSize = size >> 2;
-
-        int split = (size + 1) >> 1;
-
-        Vector2f tempOffset = new Vector2f();
-        offsetAmount += quarterSize;
-
-        //if (lodCalculator == null)
-        //    lodCalculator = createDefaultLodCalculator(); // set a default one
-
-        // 1 upper left of heightmap, upper left quad
-        float[] heightBlock1 = createHeightSubBlock(heightMap, 0, 0, split);
-    	Vector3f origin1 = new Vector3f(-quarterSize * stepScale.x, 0,
-                -quarterSize * stepScale.z);
-    	
-    	setDefaultOffset(tempOffset, origin1);
-        
-        attachQuad(heightBlock1, origin1, tempOffset, 1, "Quad1", split, blockSize);
-
-        // 2 lower left of heightmap, lower left quad
-        float[] heightBlock2 = createHeightSubBlock(heightMap, 0, split - 1,
-                        split);
-        
-    	Vector3f origin2 = new Vector3f(-quarterSize * stepScale.x, 0,
-                quarterSize * stepScale.z);
-    	
-    	setDefaultOffset(tempOffset, origin2);
-        
-        attachQuad(heightBlock2, origin2, tempOffset, 2, "Quad2", split, blockSize);
-
-
-        // 3 upper right of heightmap, upper right quad
-        float[] heightBlock3 = createHeightSubBlock(heightMap, split - 1, 0,
-                        split);
-
-    	Vector3f origin3 = new Vector3f(quarterSize * stepScale.x, 0,
-                -quarterSize * stepScale.z);
-    	
-    	setDefaultOffset(tempOffset, origin3);
-        
-        attachQuad(heightBlock3, origin3, tempOffset, 3, "Quad3", split, blockSize);
-        
-        // 4 lower right of heightmap, lower right quad
-        float[] heightBlock4 = createHeightSubBlock(heightMap, split - 1,
-                        split - 1, split);
-
-    	Vector3f origin4 = new Vector3f(quarterSize * stepScale.x, 0,
-                quarterSize * stepScale.z);
-    	
-    	setDefaultOffset(tempOffset, origin4);
-        
-        attachQuad(heightBlock4, origin4, tempOffset, 4, "Quad4", split, blockSize);
-
-    }
 
     public void generateDebugTangents(Material mat) {
         for (int x = children.size(); --x >= 0;) {
@@ -509,103 +374,6 @@ public class TerrainQuad extends Node implements Terrain {
         }
     }
 
-    /**
-     * <code>createQuadPatch</code> creates four child patches from this quad.
-     */
-    
-    protected Vector2f createBasicOffset() {
-    	Vector2f tempOffset = new Vector2f();
-        tempOffset.x = offset.x;
-        tempOffset.y = offset.y;
-        return tempOffset;
-    }
-    
-    protected void addPatch(String name, int quadrant, int split, float[] heightBlock, Vector3f origin, Vector2f tempOffset) {
-    	TerrainPatch patch = new TerrainPatch(getName() + "Patch1", split,
-                stepScale, heightBlock, origin, totalSize, tempOffset,
-                offsetAmount);
-    	patch.setQuadrant((short) quadrant);
-    	this.attachChild(patch);
-    	patch.setModelBound(new BoundingBox());
-    	patch.updateModelBound();
-        //patch.setLodCalculator(lodCalculator);
-        //TangentBinormalGenerator.generate(patch);
-    }
-    
-    protected void createQuadPatch(float[] heightMap) {
-        // create 4 terrain patches
-        int quarterSize = size >> 2;
-        int halfSize = size >> 1;
-        int split = (size + 1) >> 1;
-
-        //if (lodCalculator == null)
-        //    lodCalculator = createDefaultLodCalculator(); // set a default one
-
-        offsetAmount += quarterSize;
-
-        // 1 lower left
-        float[] heightBlock1 = createHeightSubBlock(heightMap, 0, 0, split);
-
-        Vector3f origin1 = new Vector3f(-halfSize * stepScale.x, 0, -halfSize
-                        * stepScale.z);
-
-        Vector2f tempOffset1 = createBasicOffset();
-        tempOffset1.x += origin1.x / 2;
-        tempOffset1.y += origin1.z / 2;
-
-        addPatch("Patch1", 1, split, heightBlock1, origin1, tempOffset1);
-
-        // 2 upper left
-        float[] heightBlock2 = createHeightSubBlock(heightMap, 0, split - 1,
-                        split);
-
-        Vector3f origin2 = new Vector3f(-halfSize * stepScale.x, 0, 0);
-
-        Vector2f tempOffset2 = createBasicOffset();
-        tempOffset2.x += origin1.x / 2;
-        tempOffset2.y += quarterSize * stepScale.z;
-
-        addPatch("Patch2", 2, split, heightBlock2, origin2, tempOffset2);
-
-        // 3 lower right
-        float[] heightBlock3 = createHeightSubBlock(heightMap, split - 1, 0,
-                        split);
-
-        Vector3f origin3 = new Vector3f(0, 0, -halfSize * stepScale.z);
-
-        Vector2f tempOffset3 = createBasicOffset();
-        tempOffset3.x += quarterSize * stepScale.x;
-        tempOffset3.y += origin3.z / 2;
-
-        addPatch("Patch3", 3, split, heightBlock3, origin3, tempOffset3);
-
-        // 4 upper right
-        float[] heightBlock4 = createHeightSubBlock(heightMap, split - 1,
-                        split - 1, split);
-
-        Vector3f origin4 = new Vector3f(0, 0, 0);
-
-        Vector2f tempOffset4 = createBasicOffset();
-        tempOffset4.x += quarterSize * stepScale.x;
-        tempOffset4.y += quarterSize * stepScale.z;
-
-        addPatch("Patch4", 4, split, heightBlock4, origin4, tempOffset4);
-    }
-
-    public float[] createHeightSubBlock(float[] heightMap, int x,
-                    int y, int side) {
-        float[] rVal = new float[side * side];
-        int bsize = (int) FastMath.sqrt(heightMap.length);
-        int count = 0;
-        for (int i = y; i < side + y; i++) {
-            for (int j = x; j < side + x; j++) {
-                if (j < bsize && i < bsize)
-                    rVal[count] = heightMap[j + (i * bsize)];
-                count++;
-            }
-        }
-        return rVal;
-    }
 
     /**
      * A handy method that will attach all bounding boxes of this terrain
@@ -987,19 +755,19 @@ public class TerrainQuad extends Node implements Terrain {
     }
 
     protected TerrainQuad findRightQuad() {
-    	return TerrainNeighbours.findRightQuad(this);
+    	return TerrainQuadrants.findRightQuad(this);
     }
 
     protected TerrainQuad findDownQuad() {
-	return TerrainNeighbours.findDownQuad(this);
+	return TerrainQuadrants.findDownQuad(this);
     }
 
     protected TerrainQuad findTopQuad() {
-    	return TerrainNeighbours.findTopQuad(this);
+    	return TerrainQuadrants.findTopQuad(this);
     }
 
     protected TerrainQuad findLeftQuad() {
-    	return TerrainNeighbours.findLeftQuad(this);
+    	return TerrainQuadrants.findLeftQuad(this);
     }
 
 
@@ -1007,7 +775,7 @@ public class TerrainQuad extends Node implements Terrain {
      * fix the normals on the edge of the terrain patches.
      */
     protected void fixNormalEdges(BoundingBox affectedArea) {
-    	TerrainNeighbours.fixNormalEdges(affectedArea, this);
+    	TerrainQuadrants.fixNormalEdges(affectedArea, this);
     }
 
 

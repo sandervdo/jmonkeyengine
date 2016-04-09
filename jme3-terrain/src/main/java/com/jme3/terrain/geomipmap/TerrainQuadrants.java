@@ -6,7 +6,7 @@ import com.jme3.bounding.BoundingBox;
 import com.jme3.scene.Spatial;
 import com.jme3.util.SafeArrayList;
 
-public class TerrainNeighbours {
+public class TerrainQuadrants {
 	
     protected static UpdatedTerrainPatch setTerrainPatch(TerrainPatch tp, HashMap<String,UpdatedTerrainPatch> updated) {
         UpdatedTerrainPatch utpRet = updated.get(tp.getName());
@@ -34,7 +34,7 @@ public class TerrainNeighbours {
             for (int x = terrainQuad.getChildren().size(); --x >= 0;) {
                 Spatial child = terrainQuad.getChildren().get(x);
                 if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).findNeighboursLod(updated);
+                    findNeighboursLod(updated, (TerrainQuad) child);
                 } else if (child instanceof TerrainPatch) {
 
                     TerrainPatch patch = (TerrainPatch) child;
@@ -81,7 +81,7 @@ public class TerrainNeighbours {
             for (int x = terrainQuad.getChildren().size(); --x >= 0;) {
                 Spatial child = terrainQuad.getChildren().get(x);
                 if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).fixEdges(updated);
+                    fixEdges(updated, (TerrainQuad) child);
                 } else if (child instanceof TerrainPatch) {
                     TerrainPatch patch = (TerrainPatch) child;
                     UpdatedTerrainPatch utp = updated.get(patch.getName());

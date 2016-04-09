@@ -36,12 +36,16 @@ public class TerrainTransform {
             return 0;
     }
 
+    /**
+     * Caches the transforms (except rotation) so the LOD calculator,
+     * which runs on a separate thread, can access them safely.
+     */
 	
     public static void cacheTerrainTransforms(TerrainQuad tq) {
         for (int i = tq.getChildren().size(); --i >= 0;) {
             Spatial child = tq.getChildren().get(i);
             if (child instanceof TerrainQuad) {
-                ((TerrainQuad) child).cacheTerrainTransforms();
+                cacheTerrainTransforms((TerrainQuad) child);
             } else if (child instanceof TerrainPatch) {
                 ((TerrainPatch) child).cacheTerrainTransforms();
             }
@@ -66,7 +70,7 @@ public class TerrainTransform {
             for (int i = terrainQuad.getChildren().size(); --i >= 0;) {
                 Spatial child = terrainQuad.getChildren().get(i);
                 if (child instanceof TerrainQuad) {
-                        ((TerrainQuad) child).generateEntropy(progressMonitor);
+                        generateEntropy(progressMonitor, (TerrainQuad) child);
                 } else if (child instanceof TerrainPatch) {
                     ((TerrainPatch) child).generateLodEntropies();
                     if (progressMonitor != null)
@@ -123,6 +127,18 @@ public class TerrainTransform {
         }
     }
     
-
+    protected synchronized static void reIndexPages(HashMap<String,UpdatedTerrainPatch> updated, boolean usesVariableLod, TerrainQuad tq) {
+        if (tq.getChildren() != null) {
+            for (int i = tq.getChildren().size(); --i >= 0;) {
+                Spatial child = tq.getChildren().get(i);
+                if (child instanceof TerrainQuad) {
+                    reIndexPages(updated, usesVariableLod, (TerrainQuad) child);
+                } else if (child instanceof TerrainPatch) {
+                    ((TerrainPatch) child).reIndexGeometry(updated, usesVariableLod);
+                }
+            }
+        }
+    }
+    
 
 }

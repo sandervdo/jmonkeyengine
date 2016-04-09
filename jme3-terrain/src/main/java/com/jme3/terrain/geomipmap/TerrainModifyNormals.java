@@ -12,7 +12,7 @@ public class TerrainModifyNormals {
         if (needToRecalculateNormals(tq)) {
             //TODO background-thread this if it ends up being expensive
             fixNormals(tq.getAffectedAreaBBox(), tq); // the affected patches
-            TerrainNeighbours.fixNormalEdges(tq.getAffectedAreaBBox(), tq); // the edges between the patches
+            TerrainQuadrants.fixNormalEdges(tq.getAffectedAreaBBox(), tq); // the edges between the patches
             
             setNormalRecalcNeeded(null, tq); // set to false
         }
