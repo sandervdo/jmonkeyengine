@@ -1,10 +1,12 @@
 package com.jme3.terrain.geomipmap;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.jme3.math.Vector2f;
 import com.jme3.scene.Spatial;
+import com.jme3.scene.VertexBuffer.Type;
 import com.jme3.terrain.geomipmap.TerrainQuad.LocationHeight;
 import com.jme3.util.SafeArrayList;
 
@@ -159,28 +161,28 @@ public  class TerrainHeight {
             if (quad1 instanceof TerrainQuad)
                 ((TerrainQuad)quad1).setHeight(quadLH1, overrideHeight);
             else if(quad1 instanceof TerrainPatch)
-                ((TerrainPatch)quad1).setHeight(quadLH1, overrideHeight);
+                setHeight(quadLH1, overrideHeight, (TerrainPatch)quad1);
         }
 
         if (!quadLH2.isEmpty()) {
             if (quad2 instanceof TerrainQuad)
                 ((TerrainQuad)quad2).setHeight(quadLH2, overrideHeight);
             else if(quad2 instanceof TerrainPatch)
-                ((TerrainPatch)quad2).setHeight(quadLH2, overrideHeight);
+                setHeight(quadLH2, overrideHeight, (TerrainPatch)quad2);
         }
 
         if (!quadLH3.isEmpty()) {
             if (quad3 instanceof TerrainQuad)
                 ((TerrainQuad)quad3).setHeight(quadLH3, overrideHeight);
             else if(quad3 instanceof TerrainPatch)
-                ((TerrainPatch)quad3).setHeight(quadLH3, overrideHeight);
+                setHeight(quadLH3, overrideHeight, (TerrainPatch)quad3);
         }
 
         if (!quadLH4.isEmpty()) {
             if (quad4 instanceof TerrainQuad)
                 ((TerrainQuad)quad4).setHeight(quadLH4, overrideHeight);
             else if(quad4 instanceof TerrainPatch)
-                ((TerrainPatch)quad4).setHeight(quadLH4, overrideHeight);
+                setHeight(quadLH4, overrideHeight, (TerrainPatch)quad4);
         }
     }
     
@@ -242,6 +244,26 @@ public  class TerrainHeight {
         }
 
         return hm;
+    }
+    
+    protected static void setHeight(List<LocationHeight> locationHeights, boolean overrideHeight, TerrainPatch tp) {
+        
+        for (LocationHeight lh : locationHeights) {
+            if (lh.x < 0 || lh.z < 0 || lh.x >= tp.getSize()|| lh.z >= tp.getSize())
+                continue;
+            int idx = lh.z * tp.getSize()+ lh.x;
+            if (overrideHeight) {
+            	tp.getTpLod().getLODGeomap().getHeightArray()[idx] = lh.h;
+            } else {
+                float h = tp.getMesh().getFloatBuffer(Type.Position).get(idx*3+1);
+                tp.getTpLod().getLODGeomap().getHeightArray()[idx] = h+lh.h;
+            }
+            
+        }
+
+        FloatBuffer newVertexBuffer = tp.getTpLod().getLODGeomap().writeVertexArray(null, tp.getStepScale(), false);
+        tp.getMesh().clearBuffer(Type.Position);
+        tp.getMesh().setBuffer(Type.Position, 3, newVertexBuffer);
     }
   
 }

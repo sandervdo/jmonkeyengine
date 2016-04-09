@@ -71,7 +71,7 @@ public class QuadPoint {
                     if (spat instanceof TerrainQuad) {
                         return ((TerrainQuad) spat).getHeightmapHeight(col, row);
                     } else if (spat instanceof TerrainPatch) {
-                        return ((TerrainPatch) spat).getHeightmapHeight(col, row);
+                        return TerrainPatchNormals.getHeightmapHeight(col, row, (TerrainPatch) spat);
                     }
                 }
 

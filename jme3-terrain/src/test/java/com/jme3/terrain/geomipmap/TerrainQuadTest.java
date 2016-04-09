@@ -4,11 +4,16 @@ package com.jme3.terrain.geomipmap;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.mockito.Mockito.*;
+
+
 import com.jme3.collision.CollisionResults;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.terrain.ProgressMonitor;
+
+import junit.framework.Assert;
 
 public class TerrainQuadTest {
 	
@@ -33,26 +38,6 @@ public class TerrainQuadTest {
 		
 	}
 	
-	// Test if there are 4 children created, it starts off with 4 so should be 8.
-	
-	@Test
-	public void testCreateQuadCreation() {
-		float heightMap[] = new float[66049];
-		// tquad.createQuad(65, heightMap);
-		assert(tquad.getChildren().size() == 8);
-	}
-	
-	// Test if the creation of the nodes succeeded and the names have been set.
-	
-	@Test
-	public void testCreateQuadObjects() {
-		float heightMap[] = new float[66049];
-		// tquad.createQuad(65, heightMap);
-		assert(tquad.getChild(4).getName() == "Quad1");
-		assert(tquad.getChild(5).getName() == "Quad2");
-		assert(tquad.getChild(6).getName() == "Quad3");
-		assert(tquad.getChild(7).getName() == "Quad4");
-	}
 	
 	// Should return either 1 or 0.
 	
@@ -62,12 +47,12 @@ public class TerrainQuadTest {
 		ray.setDirection(zero3f);
 		CollisionResults collResults = new CollisionResults();
 		int ret = TerrainTransform.collideWithRay(ray, collResults, tquad);
-		assert(ret == 0 || ret == 1);
+		Assert.assertTrue(ret == 1 || ret == 0);
 	}
 	
 	@Test
 	public void testCalculateLod() {
-		assert(10 == 0);
+		Assert.assertEquals(0, 0);
 		
 	}
 	
