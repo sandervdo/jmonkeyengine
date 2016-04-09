@@ -81,10 +81,6 @@ public class TerrainTransform {
                 progressMonitor.progressComplete();
     }
     
-
-    public int getNumMajorSubdivisions() {
-        return 1;
-    }
     
     protected static boolean calculateLod(List<Vector3f> location, HashMap<String,UpdatedTerrainPatch> updates, LodCalculator lodCalculator, TerrainQuad terrainQuad) {
 
@@ -126,5 +122,7 @@ public class TerrainTransform {
             }
         }
     }
+    
+
 
 }
