@@ -6,7 +6,7 @@ import com.jme3.bounding.BoundingBox;
 import com.jme3.scene.Spatial;
 import com.jme3.util.SafeArrayList;
 
-public class TerrainNeighbours {
+public class TerrainQuadrants {
 	
     protected static UpdatedTerrainPatch setTerrainPatch(TerrainPatch tp, HashMap<String,UpdatedTerrainPatch> updated) {
         UpdatedTerrainPatch utpRet = updated.get(tp.getName());
@@ -34,7 +34,7 @@ public class TerrainNeighbours {
             for (int x = terrainQuad.getChildren().size(); --x >= 0;) {
                 Spatial child = terrainQuad.getChildren().get(x);
                 if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).findNeighboursLod(updated);
+                    findNeighboursLod(updated, (TerrainQuad) child);
                 } else if (child instanceof TerrainPatch) {
 
                     TerrainPatch patch = (TerrainPatch) child;
@@ -81,7 +81,7 @@ public class TerrainNeighbours {
             for (int x = terrainQuad.getChildren().size(); --x >= 0;) {
                 Spatial child = terrainQuad.getChildren().get(x);
                 if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).fixEdges(updated);
+                    fixEdges(updated, (TerrainQuad) child);
                 } else if (child instanceof TerrainPatch) {
                     TerrainPatch patch = (TerrainPatch) child;
                     UpdatedTerrainPatch utp = updated.get(patch.getName());
@@ -179,12 +179,12 @@ public class TerrainNeighbours {
             // find the patch to the right and ask it for child 1.
             TerrainQuad quad = findRightQuad(terrainQuad);
             if (quad != null)
-                return quad.getPatch(1);
+                return getPatch(1, terrainQuad.getChildren());
         } else if (tp.getQuadrant() == 4) {
             // find the patch to the right and ask it for child 2.
             TerrainQuad quad = findRightQuad(terrainQuad);
             if (quad != null)
-                return quad.getPatch(2);
+                return getPatch(2, terrainQuad.getChildren());
         }
 
         return null;
@@ -199,11 +199,11 @@ public class TerrainNeighbours {
             // find the patch below and ask it for child 1.
             TerrainQuad quad = findDownQuad(terrainQuad);
             if (quad != null)
-                return quad.getPatch(1);
+                return getPatch(1, terrainQuad.getChildren());
         } else if (tp.getQuadrant() == 4) {
             TerrainQuad quad = findDownQuad(terrainQuad);
             if (quad != null)
-                return quad.getPatch(3);
+                return getPatch(3, terrainQuad.getChildren());
         }
 
         return null;
@@ -219,11 +219,11 @@ public class TerrainNeighbours {
             // find the patch above and ask it for child 2.
             TerrainQuad quad = findTopQuad(terrainQuad);
             if (quad != null)
-                return quad.getPatch(2);
+                return getPatch(2, terrainQuad.getChildren());
         } else if (tp.getQuadrant() == 3) {
             TerrainQuad quad = findTopQuad(terrainQuad);
             if (quad != null)
-                return quad.getPatch(4);
+                return getPatch(4, terrainQuad.getChildren());
         }
 
         return null;
@@ -238,11 +238,11 @@ public class TerrainNeighbours {
             // find the patch above and ask it for child 3.
             TerrainQuad quad = findLeftQuad(terrainQuad);
             if (quad != null)
-                return quad.getPatch(3);
+                return getPatch(3, terrainQuad.getChildren());
         } else if (tp.getQuadrant() == 2) {
             TerrainQuad quad = findLeftQuad(terrainQuad);
             if (quad != null)
-                return quad.getPatch(4);
+                return getPatch(4, terrainQuad.getChildren());
         }
 
         return null;
@@ -262,17 +262,17 @@ public class TerrainNeighbours {
             pQuad = (TerrainQuad) terrainQuad.getRemoteParent();
         
         if (terrainQuad.getQuadrant() == 1)
-            return pQuad.getQuad(3);
+            return getQuad(3, pQuad);
         else if (terrainQuad.getQuadrant() == 2)
-            return pQuad.getQuad(4);
+            return getQuad(4, pQuad);
         else if (terrainQuad.getQuadrant() == 3) {
-            TerrainQuad quad = pQuad.findRightQuad();
+            TerrainQuad quad = findRightQuad(pQuad);
             if (quad != null)
-                return quad.getQuad(1);
+                return getQuad(1, quad);
         } else if (terrainQuad.getQuadrant() == 4) {
-            TerrainQuad quad = pQuad.findRightQuad();
+            TerrainQuad quad = findRightQuad(pQuad);
             if (quad != null)
-                return quad.getQuad(2);
+                return getQuad(2, quad);
         } else if (terrainQuad.getQuadrant() == 0) {
             // at the top quad
             if (useFinder) {
@@ -298,17 +298,17 @@ public class TerrainNeighbours {
             pQuad = (TerrainQuad) terrainQuad.getRemoteParent();
 
         if (terrainQuad.getQuadrant() == 1)
-            return pQuad.getQuad(2);
+            return getQuad(2, pQuad);
         else if (terrainQuad.getQuadrant() == 3)
-            return pQuad.getQuad(4);
+            return getQuad(4, pQuad);
         else if (terrainQuad.getQuadrant() == 2) {
-            TerrainQuad quad = pQuad.findDownQuad();
+            TerrainQuad quad = findDownQuad(pQuad);
             if (quad != null)
-                return quad.getQuad(1);
+                return getQuad(1, quad);
         } else if (terrainQuad.getQuadrant() == 4) {
-            TerrainQuad quad = pQuad.findDownQuad();
+            TerrainQuad quad = findDownQuad(pQuad);
             if (quad != null)
-                return quad.getQuad(3);
+                return getQuad(3, quad);
         } else if (terrainQuad.getQuadrant() == 0) {
             // at the top quad
             if (useFinder) {
@@ -334,17 +334,17 @@ public class TerrainNeighbours {
             pQuad = (TerrainQuad) terrainQuad.getRemoteParent();
 
         if (terrainQuad.getQuadrant() == 2)
-            return pQuad.getQuad(1);
+            return getQuad(1, pQuad);
         else if (terrainQuad.getQuadrant() == 4)
-            return pQuad.getQuad(3);
+            return getQuad(3, pQuad);
         else if (terrainQuad.getQuadrant() == 1) {
-            TerrainQuad quad = pQuad.findTopQuad();
+            TerrainQuad quad = findTopQuad(pQuad);
             if (quad != null)
-                return quad.getQuad(2);
+                return getQuad(2, quad);
         } else if (terrainQuad.getQuadrant() == 3) {
-            TerrainQuad quad = pQuad.findTopQuad();
+            TerrainQuad quad = findTopQuad(pQuad);
             if (quad != null)
-                return quad.getQuad(4);
+                return getQuad(4, quad);
         } else if (terrainQuad.getQuadrant() == 0) {
             // at the top quad
             if (useFinder) {
@@ -370,17 +370,17 @@ public class TerrainNeighbours {
             pQuad = (TerrainQuad) terrainQuad.getRemoteParent();
 
         if (terrainQuad.getQuadrant() == 3)
-            return pQuad.getQuad(1);
+            return getQuad(1, pQuad);
         else if (terrainQuad.getQuadrant() == 4)
-            return pQuad.getQuad(2);
+            return getQuad(2, pQuad);
         else if (terrainQuad.getQuadrant() == 1) {
-            TerrainQuad quad = pQuad.findLeftQuad();
+            TerrainQuad quad = findLeftQuad(pQuad);
             if (quad != null)
-                return quad.getQuad(3);
+                return getQuad(3, quad);
         } else if (terrainQuad.getQuadrant() == 2) {
-            TerrainQuad quad = pQuad.findLeftQuad();
+            TerrainQuad quad = findLeftQuad(pQuad);
             if (quad != null)
-                return quad.getQuad(4);
+                return getQuad(4, quad);
         } else if (terrainQuad.getQuadrant() == 0) {
             // at the top quad
             if (useFinder) {
@@ -389,6 +389,21 @@ public class TerrainNeighbours {
             }
         }
 
+        return null;
+    }
+    
+    protected static TerrainQuad getQuad(int quad, TerrainQuad terrainQuad) {
+        if (quad == 0)
+            return terrainQuad;
+        if (terrainQuad.getChildren() != null)
+            for (int x = terrainQuad.getChildren().size(); --x >= 0;) {
+                Spatial child = terrainQuad.getChildren().get(x);
+                if (child instanceof TerrainQuad) {
+                    TerrainQuad tq = (TerrainQuad) child;
+                    if (tq.getQuadrant() == quad)
+                        return tq;
+                }
+            }
         return null;
     }
 

@@ -38,7 +38,7 @@ public class TerrainQuadTest {
 	@Test
 	public void testCreateQuadCreation() {
 		float heightMap[] = new float[66049];
-		tquad.createQuad(65, heightMap);
+		// tquad.createQuad(65, heightMap);
 		assert(tquad.getChildren().size() == 8);
 	}
 	
@@ -47,7 +47,7 @@ public class TerrainQuadTest {
 	@Test
 	public void testCreateQuadObjects() {
 		float heightMap[] = new float[66049];
-		tquad.createQuad(65, heightMap);
+		// tquad.createQuad(65, heightMap);
 		assert(tquad.getChild(4).getName() == "Quad1");
 		assert(tquad.getChild(5).getName() == "Quad2");
 		assert(tquad.getChild(6).getName() == "Quad3");
