@@ -6,8 +6,10 @@ import java.util.logging.Logger;
 
 import javax.management.InvalidAttributeValueException;
 
+import com.jme3.export.InputCapsule;
 import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
+import com.jme3.export.OutputCapsule;
 import com.jme3.export.Savable;
 
 public class Vector implements Savable, Cloneable, java.io.Serializable {
@@ -112,22 +114,6 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 		return this.set(newValues);			
 	}
 	
-	public Vector mult(float scalar) {
-		float[] res = new float[this.getSize()];
-		for (int x = 0; x < this.values.length; x++) {
-			res[x] = this.values[x] * scalar;
-		}
-		return new Vector(res);
-	}
-	
-	public Vector mult(float scalar, Vector res) {
-		return res.set(this.mult(scalar));
-	}
-	
-	public Vector multLocal(float scalar) {
-		return this.set(this.mult(scalar));
-	}
-	
 	public Vector scaleAdd(float scalar, Vector a) {
 		return scaleAdd(scalar, this, a);
 	}
@@ -179,6 +165,202 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 		return FastMath.sqrt(distanceSquared(v));
 	}
 	
+	public Vector mult(float scalar) {
+		float[] res = new float[this.getSize()];
+		for (int x = 0; x < this.values.length; x++) {
+			res[x] = this.values[x] * scalar;
+		}
+		return new Vector(res);
+	}
+	
+	public Vector mult(float scalar, Vector res) {
+		return res.set(this.mult(scalar));
+	}
+	
+	public Vector multLocal(float scalar) {
+		return this.mult(scalar, this);
+	}
+	
+	public Vector mult(float[] v, Vector dest) {
+		if (dest == null) dest = new Vector(this.values.length);
+		float[] res = new float[this.values.length];
+		for (int x = 0; x < this.values.length; x++) {
+			res[x] = this.values[x] * v[x];
+		}
+		return dest.set(res);
+	}
+	
+	public Vector mult(Vector v) {
+		return mult(v.getValues(), null);
+	}
+	
+	public Vector mult(Vector v, Vector dest) {
+		return mult(v.getValues(), dest);
+	}
+	
+	public Vector divide(float scalar) {
+		scalar = 1f / scalar;
+		return this.mult(scalar);
+	}
+	
+	public Vector divideLocal(float scalar) {
+		scalar = 1f / scalar;
+		return this.multLocal(scalar);
+	}
+	
+	public Vector divide(Vector v) {
+		float[] res = new float[this.values.length];
+		for (int x = 0; x < this.values.length; x++) {
+			res[x] = this.values[x] / v.getValues()[x];
+		}
+		return new Vector(res);
+	}
+	
+	public Vector negate() {
+		return this.mult(-1f);
+	}
+	
+	public Vector negateLocal() {
+		return this.multLocal(-1f);
+	}
+	
+	public Vector subtract(float[] v) {
+		float[] res = new float[this.values.length];
+		for (int x = 0; x < this.values.length; x++) {
+			res[x] = this.values[x] - v[x];
+		}
+		return new Vector(res);
+	}
+	
+	public Vector subtract(Vector v) {
+		return this.subtract(v.getValues());
+	}
+	
+	public Vector subtractLocal(float[] v) {
+		return this.set(this.subtract(v));
+	}
+	
+	public Vector subtractLocal(Vector v) {
+		return this.set(this.subtract(v));
+	}
+	
+	public Vector subtract(Vector v, Vector dest) {
+		return dest.set(this.subtract(v));
+	}
+	
+	public Vector normalize() {
+		float length = lengthSquared();
+		
+		if (length != 1f && length != 0f) {
+			length = 1.0f / this.length();
+			return mult(length);
+		}
+		
+		return clone();
+	}
+	
+	public Vector normalizeLocal() {
+		return this.set(this.normalize());
+	}
+	
+	public Vector max(Vector v) {
+		float[] res = new float[this.values.length];
+		for (int x = 0; x < this.values.length; x++) {
+			res[x] = (v.getValues()[x] > this.values[x] ? v.getValues()[x] : this.values[x]);
+		}
+		return new Vector(res);
+	}
+	
+	public Vector maxLocal(Vector v) {
+		return this.set(this.max(v));
+	}
+	
+	public Vector min(Vector v) {
+		float[] res = new float[this.values.length];
+		for (int x = 0; x < this.values.length; x++) {
+			res[x] = (v.getValues()[x] < this.values[x] ? v.getValues()[x] : this.values[x]);
+		}
+		return new Vector(res);
+	}
+	
+	public Vector minLocal(Vector v) {
+		return this.set(this.min(v));
+	}	
+	
+	public float angleBetween(Vector v) {
+		float dotProduct = dot(v);
+		float angle = FastMath.acos(dotProduct);
+		return angle;
+	}
+	
+	public Vector interpolateLocal(Vector finalVec, float changeAmnt) {
+		return interpolateLocal(this, finalVec, changeAmnt);
+	}
+	
+	public Vector interpolateLocal(Vector beginVec, Vector finalVec, float changeAmnt) {
+		for (int x = 0; x < this.values.length; x++) {
+			this.values[x] = (1 - changeAmnt) * beginVec.getValues()[x] + changeAmnt * finalVec.getValues()[x];
+		}
+		return this;
+	}
+	
+	public static boolean isValidVector(Vector v) {
+		if (v == null) return false;
+		for (int x = 0; x < v.getValues().length; x++) {
+			if (Float.isNaN(v.getValues()[x]) || Float.isInfinite(v.getValues()[x])) 
+				return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public Vector clone() {
+		try {
+			return (Vector) super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new AssertionError();
+		}
+	}
+	
+	public float[] toArray(float[] floats) {
+		if (floats == null) // Also when invalid length?
+			floats = new float[this.values.length];
+		
+		for (int x = 0; x < this.values.length; x++) {
+			floats[x] = this.values[x];
+		}
+		
+		return floats;
+	}
+	
+	public boolean equals(Object o) {
+		if (!(o instanceof Vector)) { return false; }
+
+        if (this == o) { return true; }
+        
+        Vector comp = (Vector) o;
+        for (int x = 0; x < this.values.length; x++) {
+        	if (Float.compare(this.values[x], comp.getValues()[x]) != 0) return false;
+        }
+        return true;
+	}
+	
+	public int hashCode() {
+		int hash = 37;
+		for (int x = 0; x < this.values.length; x++) { 
+			hash += 37 * hash + Float.floatToIntBits(this.values[x]); 
+		}
+		return hash;
+	}
+	
+	public String toString() {
+		String res = "(";
+		for (int x = 0; x < this.values.length; x++) { 
+			res += this.values[x] + (x < this.values.length - 1 ? ", " : ""); 
+		}
+		return res + ")";
+	}
+	
 	public float[] getValues() {
 		return this.values;
 	}
@@ -188,15 +370,32 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 	}
 	
 	@Override
-	public void write(JmeExporter ex) throws IOException {
-		// TODO Auto-generated method stub
-		
+	public void write(JmeExporter e) throws IOException {
+		OutputCapsule capsule = e.getCapsule(this);
+		for (int x = 0; x < this.values.length; x++) {
+			capsule.write(this.values[x], "" + x + "", 0);
+		}
 	}
 
 	@Override
-	public void read(JmeImporter im) throws IOException {
-		// TODO Auto-generated method stub
-		
+	public void read(JmeImporter e) throws IOException {
+		InputCapsule capsule = e.getCapsule(this);
+		for (int x = 0; x < this.values.length; x++) {
+			this.values[x] = capsule.readFloat("" + x + "", 0);
+		}
 	}
 
+	public float get(int index) {
+		if (index < this.values.length) {
+			return this.values[index];
+		}
+		throw new IllegalArgumentException("index must be between 0 and " + (this.values.length - 1));
+	}
+	
+	public void set(int index, float f) {
+		if (index < this.values.length) {
+			this.values[index] = f;
+		}
+		throw new IllegalArgumentException("index must be between 0 and " + (this.values.length - 1));
+	}
 }
