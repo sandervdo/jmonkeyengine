@@ -300,26 +300,6 @@ public class TerrainPatch extends Geometry {
         return tpLod.getLODGeomap().getGridTrianglesAtPoint(x, z, getWorldScale() , getWorldTranslation());
     }
 
-    protected void setHeight(List<LocationHeight> locationHeights, boolean overrideHeight) {
-        
-        for (LocationHeight lh : locationHeights) {
-            if (lh.x < 0 || lh.z < 0 || lh.x >= size || lh.z >= size)
-                continue;
-            int idx = lh.z * size + lh.x;
-            if (overrideHeight) {
-            	tpLod.getLODGeomap().getHeightArray()[idx] = lh.h;
-            } else {
-                float h = getMesh().getFloatBuffer(Type.Position).get(idx*3+1);
-                tpLod.getLODGeomap().getHeightArray()[idx] = h+lh.h;
-            }
-            
-        }
-
-        FloatBuffer newVertexBuffer = tpLod.getLODGeomap().writeVertexArray(null, stepScale, false);
-        getMesh().clearBuffer(Type.Position);
-        getMesh().setBuffer(Type.Position, 3, newVertexBuffer);
-    }
-
 
     protected float getHeight(int x, int z, float xm, float zm) {
         return tpLod.getLODGeomap().getHeight(x,z,xm,zm);
