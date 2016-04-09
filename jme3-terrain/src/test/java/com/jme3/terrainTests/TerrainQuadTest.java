@@ -1,30 +1,20 @@
-package jme3.terrain.geomipmap;
+package com.jme3.terrainTests;
 
-
+import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+
+import static org.mockito.Mockito.*;
 
 import com.jme3.collision.CollisionResults;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
+import com.jme3.terrain.GeoMap;
 import com.jme3.terrain.ProgressMonitor;
 import com.jme3.terrain.geomipmap.TerrainQuad;
 import com.jme3.terrain.geomipmap.TerrainTransform;
-import com.jme3.terrain.geomipmap.UpdatedTerrainPatch;
-import com.jme3.terrain.geomipmap.lodcalc.LodCalculator;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 public class TerrainQuadTest {
 	
@@ -83,7 +73,7 @@ public class TerrainQuadTest {
 	
 	@Test
 	public void testCalculateLod() {
-		
+		assert(10 == 0);
 		
 	}
 	
