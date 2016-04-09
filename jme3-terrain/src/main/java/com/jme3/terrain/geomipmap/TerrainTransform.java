@@ -2,6 +2,7 @@ package com.jme3.terrain.geomipmap;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.jme3.collision.CollisionResults;
 import com.jme3.material.Material;
@@ -13,6 +14,7 @@ import com.jme3.scene.Spatial.CullHint;
 import com.jme3.terrain.ProgressMonitor;
 import com.jme3.terrain.geomipmap.lodcalc.LodCalculator;
 import com.jme3.terrain.geomipmap.picking.BresenhamTerrainPicker;
+import com.jme3.terrain.geomipmap.picking.TerrainPickData;
 import com.jme3.util.TangentBinormalGenerator;
 
 public class TerrainTransform {
@@ -155,6 +157,89 @@ public class TerrainTransform {
                 debug.setLocalTranslation(child.getLocalTranslation());
                 debug.setCullHint(CullHint.Never);
                 debug.setMaterial(mat);
+            }
+        }
+    }
+    
+    /**
+     * Retrieve all Terrain Patches from all children and store them
+     * in the 'holder' list
+     * @param holder must not be null, will be populated when returns
+     */
+    public void getAllTerrainPatches(List<TerrainPatch> holder, TerrainQuad tq) {
+        if (tq.getChildren() != null) {
+            for (int i = tq.getChildren().size(); --i >= 0;) {
+                Spatial child = tq.getChildren().get(i);
+                if (child instanceof TerrainQuad) {
+                    getAllTerrainPatches(holder, (TerrainQuad) child);
+                } else if (child instanceof TerrainPatch) {
+                    holder.add((TerrainPatch)child);
+                }
+            }
+        }
+    }
+
+    public void getAllTerrainPatchesWithTranslation(Map<TerrainPatch,Vector3f> holder, Vector3f translation, TerrainQuad tq) {
+        if (tq.getChildren() != null) {
+            for (int i = tq.getChildren().size(); --i >= 0;) {
+                Spatial child = tq.getChildren().get(i);
+                if (child instanceof TerrainQuad) {
+                    getAllTerrainPatchesWithTranslation(holder, translation.clone().add(child.getLocalTranslation()), (TerrainQuad) child);
+                } else if (child instanceof TerrainPatch) {
+                    //if (holder.size() < 4)
+                    holder.put((TerrainPatch)child, translation.clone().add(child.getLocalTranslation()));
+                }
+            }
+        }
+    }
+    
+    /**
+     * Gather the terrain patches that intersect the given ray (toTest).
+     * This only tests the bounding boxes
+     * @param toTest
+     * @param results
+     */
+    public static void findPick(Ray toTest, List<TerrainPickData> results, TerrainQuad tq) {
+
+        if (tq.getWorldBound() != null) {
+            if (tq.getWorldBound().intersects(toTest)) {
+                // further checking needed.
+                for (int i = 0; i < tq.getQuantity(); i++) {
+                    if (tq.getChildren().get(i) instanceof TerrainPatch) {
+                        TerrainPatch tp = (TerrainPatch) tq.getChildren().get(i);
+                        tp.ensurePositiveVolumeBBox();
+                        if (tp.getWorldBound().intersects(toTest)) {
+                            CollisionResults cr = new CollisionResults();
+                            toTest.collideWith(tp.getWorldBound(), cr);
+                            if (cr != null && cr.getClosestCollision() != null) {
+                                cr.getClosestCollision().getDistance();
+                                results.add(new TerrainPickData(tp, cr.getClosestCollision()));
+                            }
+                        }
+                    }
+                    else if (tq.getChildren().get(i) instanceof TerrainQuad) {
+                    	findPick(toTest, results, (TerrainQuad) tq.getChildren().get(i));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes any cached references this terrain is holding, in particular
+     * the TerrainPatch's neighbour references.
+     * This is called automatically when the root terrainQuad is detached from
+     * its parent or if setParent(null) is called.
+     */
+    public static void clearCaches(TerrainQuad tq) {
+        if (tq.getChildren() != null) {
+            for (int i = tq.getChildren().size(); --i >= 0;) {
+                Spatial child = tq.getChildren().get(i);
+                if (child instanceof TerrainQuad) {
+                    clearCaches((TerrainQuad) child);
+                } else if (child instanceof TerrainPatch) {
+                    ((TerrainPatch) child).clearCaches();
+                }
             }
         }
     }

@@ -207,10 +207,10 @@ public  class TerrainHeight {
                 }
             }
             else {
-                ul = tq.getQuad(1).getHeightMap();
-                bl = tq.getQuad(2).getHeightMap();
-                ur = tq.getQuad(3).getHeightMap();
-                br = tq.getQuad(4).getHeightMap();
+                ul = TerrainQuadrants.getQuad(1, tq).getHeightMap();
+                bl = TerrainQuadrants.getQuad(2, tq).getHeightMap();
+                ur = TerrainQuadrants.getQuad(3, tq).getHeightMap();
+                br = TerrainQuadrants.getQuad(4, tq).getHeightMap();
             }
 
             // combine them into a single heightmap

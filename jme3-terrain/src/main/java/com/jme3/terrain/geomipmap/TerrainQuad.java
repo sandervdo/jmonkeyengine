@@ -336,6 +336,14 @@ public class TerrainQuad extends Node implements Terrain {
         return totalSize;
     }
     
+    public int getQuadrant() {
+        return quadrant;
+    }
+
+    public void setQuadrant(short quadrant) {
+        this.quadrant = quadrant;
+    }
+    
     /**
      * Generate the entropy values for the terrain for the "perspective" LOD
      * calculator. This routine can take a long time to run!
@@ -530,14 +538,6 @@ public class TerrainQuad extends Node implements Terrain {
     }
 
 
-    protected boolean isPointOnTerrain(int x, int z) {
-        return (x >= 0 && x <= totalSize && z >= 0 && z <= totalSize);
-    }
-
-
-    // a position can be in multiple quadrants, so use a bit anded value.
-
-
     /**
      * lock or unlock the meshes of this terrain.
      * Locked meshes are uneditable but have better performance.
@@ -554,44 +554,6 @@ public class TerrainQuad extends Node implements Terrain {
                     ((TerrainPatch) getChild(i)).unlockMesh();
             }
         }
-    }
-
-
-    public int getQuadrant() {
-        return quadrant;
-    }
-
-    public void setQuadrant(short quadrant) {
-        this.quadrant = quadrant;
-    }
-
-
-    protected TerrainPatch getPatch(int quad) {
-        if (children != null)
-            for (int x = children.size(); --x >= 0;) {
-                Spatial child = children.get(x);
-                if (child instanceof TerrainPatch) {
-                    TerrainPatch tb = (TerrainPatch) child;
-                    if (tb.getQuadrant() == quad)
-                        return tb;
-                }
-            }
-        return null;
-    }
-
-    protected TerrainQuad getQuad(int quad) {
-        if (quad == 0)
-            return this;
-        if (children != null)
-            for (int x = children.size(); --x >= 0;) {
-                Spatial child = children.get(x);
-                if (child instanceof TerrainQuad) {
-                    TerrainQuad tq = (TerrainQuad) child;
-                    if (tq.getQuadrant() == quad)
-                        return tq;
-                }
-            }
-        return null;
     }
 
 
@@ -620,71 +582,6 @@ public class TerrainQuad extends Node implements Terrain {
             total += child.collideWith(other, results);
         }
         return total;
-    }
-
-    /**
-     * Gather the terrain patches that intersect the given ray (toTest).
-     * This only tests the bounding boxes
-     * @param toTest
-     * @param results
-     */
-    public void findPick(Ray toTest, List<TerrainPickData> results) {
-
-        if (getWorldBound() != null) {
-            if (getWorldBound().intersects(toTest)) {
-                // further checking needed.
-                for (int i = 0; i < getQuantity(); i++) {
-                    if (children.get(i) instanceof TerrainPatch) {
-                        TerrainPatch tp = (TerrainPatch) children.get(i);
-                        tp.ensurePositiveVolumeBBox();
-                        if (tp.getWorldBound().intersects(toTest)) {
-                            CollisionResults cr = new CollisionResults();
-                            toTest.collideWith(tp.getWorldBound(), cr);
-                            if (cr != null && cr.getClosestCollision() != null) {
-                                cr.getClosestCollision().getDistance();
-                                results.add(new TerrainPickData(tp, cr.getClosestCollision()));
-                            }
-                        }
-                    }
-                    else if (children.get(i) instanceof TerrainQuad) {
-                        ((TerrainQuad) children.get(i)).findPick(toTest, results);
-                    }
-                }
-            }
-        }
-    }
-
-
-    /**
-     * Retrieve all Terrain Patches from all children and store them
-     * in the 'holder' list
-     * @param holder must not be null, will be populated when returns
-     */
-    public void getAllTerrainPatches(List<TerrainPatch> holder) {
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial child = children.get(i);
-                if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).getAllTerrainPatches(holder);
-                } else if (child instanceof TerrainPatch) {
-                    holder.add((TerrainPatch)child);
-                }
-            }
-        }
-    }
-
-    public void getAllTerrainPatchesWithTranslation(Map<TerrainPatch,Vector3f> holder, Vector3f translation) {
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial child = children.get(i);
-                if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).getAllTerrainPatchesWithTranslation(holder, translation.clone().add(child.getLocalTranslation()));
-                } else if (child instanceof TerrainPatch) {
-                    //if (holder.size() < 4)
-                    holder.put((TerrainPatch)child, translation.clone().add(child.getLocalTranslation()));
-                }
-            }
-        }
     }
 
     @Override
@@ -761,30 +658,10 @@ public class TerrainQuad extends Node implements Terrain {
         super.setParent(parent);
         if (parent == null) {
             // if the terrain is being detached
-            clearCaches();
+            TerrainTransform.clearCaches(this);
         }
     }
     
-    /**
-     * Removes any cached references this terrain is holding, in particular
-     * the TerrainPatch's neighbour references.
-     * This is called automatically when the root terrainQuad is detached from
-     * its parent or if setParent(null) is called.
-     */
-    public void clearCaches() {
-        if (children != null) {
-            for (int i = children.size(); --i >= 0;) {
-                Spatial child = children.get(i);
-                if (child instanceof TerrainQuad) {
-                    ((TerrainQuad) child).clearCaches();
-                } else if (child instanceof TerrainPatch) {
-                    ((TerrainPatch) child).clearCaches();
-                }
-            }
-        }
-    }
-    
-
 
     public float[] getHeightMap() {
     	return TerrainHeight.getHeightMap(this);

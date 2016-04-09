@@ -36,6 +36,9 @@ public final class Utils {
         return true;
     }
     
+    protected boolean isPointOnTerrain(int x, int z, int totalSize) {
+        return (x >= 0 && x <= totalSize && z >= 0 && z <= totalSize);
+    }
     
     
 
