@@ -13,7 +13,7 @@ public class TerrainNeighbours {
         if (utpRet == null) {
             utpRet = new UpdatedTerrainPatch(tp);
             updated.put(utpRet.getName(), utpRet);
-            utpRet.setNewLod(tp.lod);
+            utpRet.setNewLod(tp.getLod());
         }
     	return utpRet;
     }
@@ -46,7 +46,7 @@ public class TerrainNeighbours {
 
                     UpdatedTerrainPatch utp = updated.get(patch.getName());
                     if (utp == null) {
-                        utp = new UpdatedTerrainPatch(patch, patch.lod);
+                        utp = new UpdatedTerrainPatch(patch, patch.getLod());
                         updated.put(utp.getName(), utp);
                     }
 
