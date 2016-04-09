@@ -38,7 +38,7 @@ public class TerrainNormals {
                     fixNormals(affectedArea, (TerrainQuad) child);
             } else if (child instanceof TerrainPatch) {
                 if (affectedArea != null && affectedArea.intersects(((TerrainPatch) child).getWorldBound()) )
-                    ((TerrainPatch) child).updateNormals(); // recalculate the patch's normals
+                    TerrainPatchNormals.updateNormals((TerrainPatch) child); // recalculate the patch's normals
             }
         }
     }

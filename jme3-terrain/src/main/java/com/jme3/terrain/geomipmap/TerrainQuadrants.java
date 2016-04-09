@@ -150,7 +150,7 @@ public class TerrainQuadrants {
                 if (left != null)
                     bottomLeft = findDownPatch(left, terrainQuad);
 
-                tp.fixNormalEdges(right, bottom, top, left, bottomRight, bottomLeft, topRight, topLeft);
+                TerrainPatchNormals.fixNormalEdges(right, bottom, top, left, bottomRight, bottomLeft, topRight, topLeft, tp);
 
             }
         } // for each child
