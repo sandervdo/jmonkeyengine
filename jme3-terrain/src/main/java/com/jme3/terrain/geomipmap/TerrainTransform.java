@@ -7,10 +7,13 @@ import com.jme3.collision.CollisionResults;
 import com.jme3.material.Material;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
+import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
+import com.jme3.scene.Spatial.CullHint;
 import com.jme3.terrain.ProgressMonitor;
 import com.jme3.terrain.geomipmap.lodcalc.LodCalculator;
 import com.jme3.terrain.geomipmap.picking.BresenhamTerrainPicker;
+import com.jme3.util.TangentBinormalGenerator;
 
 public class TerrainTransform {
 	
@@ -136,6 +139,22 @@ public class TerrainTransform {
                 } else if (child instanceof TerrainPatch) {
                     ((TerrainPatch) child).reIndexGeometry(updated, usesVariableLod);
                 }
+            }
+        }
+    }
+    
+    public void generateDebugTangents(Material mat, TerrainQuad tq) {
+        for (int x = tq.getChildren().size(); --x >= 0;) {
+            Spatial child = tq.getChildren().get(x);
+            if (child instanceof TerrainQuad) {
+                generateDebugTangents(mat, (TerrainQuad)child);
+            } else if (child instanceof TerrainPatch) {
+                Geometry debug = new Geometry( "Debug " + tq.getName(),
+                    TangentBinormalGenerator.genTbnLines( ((TerrainPatch)child).getMesh(), 0.8f));
+                tq.attachChild(debug);
+                debug.setLocalTranslation(child.getLocalTranslation());
+                debug.setCullHint(CullHint.Never);
+                debug.setMaterial(mat);
             }
         }
     }

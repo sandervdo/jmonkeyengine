@@ -266,11 +266,11 @@ public class TerrainQuadrants {
         else if (terrainQuad.getQuadrant() == 2)
             return pQuad.getQuad(4);
         else if (terrainQuad.getQuadrant() == 3) {
-            TerrainQuad quad = pQuad.findRightQuad();
+            TerrainQuad quad = findRightQuad(pQuad);
             if (quad != null)
                 return quad.getQuad(1);
         } else if (terrainQuad.getQuadrant() == 4) {
-            TerrainQuad quad = pQuad.findRightQuad();
+            TerrainQuad quad = findRightQuad(pQuad);
             if (quad != null)
                 return quad.getQuad(2);
         } else if (terrainQuad.getQuadrant() == 0) {
@@ -302,11 +302,11 @@ public class TerrainQuadrants {
         else if (terrainQuad.getQuadrant() == 3)
             return pQuad.getQuad(4);
         else if (terrainQuad.getQuadrant() == 2) {
-            TerrainQuad quad = pQuad.findDownQuad();
+            TerrainQuad quad = findDownQuad(pQuad);
             if (quad != null)
                 return quad.getQuad(1);
         } else if (terrainQuad.getQuadrant() == 4) {
-            TerrainQuad quad = pQuad.findDownQuad();
+            TerrainQuad quad = findDownQuad(pQuad);
             if (quad != null)
                 return quad.getQuad(3);
         } else if (terrainQuad.getQuadrant() == 0) {
@@ -338,11 +338,11 @@ public class TerrainQuadrants {
         else if (terrainQuad.getQuadrant() == 4)
             return pQuad.getQuad(3);
         else if (terrainQuad.getQuadrant() == 1) {
-            TerrainQuad quad = pQuad.findTopQuad();
+            TerrainQuad quad = findTopQuad(pQuad);
             if (quad != null)
                 return quad.getQuad(2);
         } else if (terrainQuad.getQuadrant() == 3) {
-            TerrainQuad quad = pQuad.findTopQuad();
+            TerrainQuad quad = findTopQuad(pQuad);
             if (quad != null)
                 return quad.getQuad(4);
         } else if (terrainQuad.getQuadrant() == 0) {
@@ -374,11 +374,11 @@ public class TerrainQuadrants {
         else if (terrainQuad.getQuadrant() == 4)
             return pQuad.getQuad(2);
         else if (terrainQuad.getQuadrant() == 1) {
-            TerrainQuad quad = pQuad.findLeftQuad();
+            TerrainQuad quad = findLeftQuad(pQuad);
             if (quad != null)
                 return quad.getQuad(3);
         } else if (terrainQuad.getQuadrant() == 2) {
-            TerrainQuad quad = pQuad.findLeftQuad();
+            TerrainQuad quad = findLeftQuad(pQuad);
             if (quad != null)
                 return quad.getQuad(4);
         } else if (terrainQuad.getQuadrant() == 0) {

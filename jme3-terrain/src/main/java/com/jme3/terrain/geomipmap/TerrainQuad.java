@@ -317,11 +317,15 @@ public class TerrainQuad extends Node implements Terrain {
     	return this.offset;
     }
     
+    public int getTerrainSize() {
+        return totalSize;
+    }
+    
     /**
      * Generate the entropy values for the terrain for the "perspective" LOD
      * calculator. This routine can take a long time to run!
      * @param progressMonitor optional
-     * Jorden: I can't remove this
+     * Jorden: keeper
      */
     public void generateEntropy(ProgressMonitor progressMonitor) {
     	TerrainTransform.generateEntropy(progressMonitor, this);
@@ -334,6 +338,8 @@ public class TerrainQuad extends Node implements Terrain {
     public Material getMaterial() {
         return getMaterial(null);
     }
+    
+    // Jorden: keeper
     
     public Material getMaterial(Vector3f worldLocation) {
         // get the material from one of the children. They all share the same material
@@ -353,33 +359,13 @@ public class TerrainQuad extends Node implements Terrain {
     public int getNumMajorSubdivisions() {
         return 1;
     }
-    
-
-
-
-
-    public void generateDebugTangents(Material mat) {
-        for (int x = children.size(); --x >= 0;) {
-            Spatial child = children.get(x);
-            if (child instanceof TerrainQuad) {
-                ((TerrainQuad)child).generateDebugTangents(mat);
-            } else if (child instanceof TerrainPatch) {
-                Geometry debug = new Geometry( "Debug " + name,
-                    TangentBinormalGenerator.genTbnLines( ((TerrainPatch)child).getMesh(), 0.8f));
-                attachChild(debug);
-                debug.setLocalTranslation(child.getLocalTranslation());
-                debug.setCullHint(CullHint.Never);
-                debug.setMaterial(mat);
-            }
-        }
-    }
-
+   
 
     /**
      * A handy method that will attach all bounding boxes of this terrain
      * to the node you supply.
      * Useful to visualize the bounding boxes when debugging.
-     *
+     * Jorden: Unused, keeper
      * @param parent that will get the bounding box shapes of the terrain attached to
      */
     public void attachBoundChildren(Node parent) {
@@ -401,6 +387,7 @@ public class TerrainQuad extends Node implements Terrain {
 
     /**
      * used by attachBoundChildren()
+     * Jorden: Keeper
      */
     private void attachBoundingBox(BoundingBox bb, Node parent) {
         WireBox wb = new WireBox(bb.getXExtent(), bb.getYExtent(), bb.getZExtent());
@@ -412,26 +399,37 @@ public class TerrainQuad extends Node implements Terrain {
     
     /**
      * This will cause all normals for this terrain quad to be recalculated
+     * Jorden: keeper
      */
     protected void setNeedToRecalculateNormals() {
         affectedAreaBBox = new BoundingBox(getWorldTranslation(), Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
     }
+    
+    protected static class LocationHeight {
+        int x;
+        int z;
+        float h;
+
+        LocationHeight(){}
+
+        LocationHeight(int x, int z, float h){
+            this.x = x;
+            this.z = z;
+            this.h = h;
+        }
+    }
+    
+    // Jorden: Keeper
 
     public float getHeightmapHeight(Vector2f xz) {
-        // offset
-        int halfSize = totalSize / 2;
-        int x = Math.round((xz.x / getWorldScale().x) + halfSize);
-        int z = Math.round((xz.y / getWorldScale().z) + halfSize);
-
-        if (!isInside(x, z))
-            return Float.NaN;
-        return getHeightmapHeight(x, z);
+    	return TerrainHeight.getHeightmapHeight(xz, this);
     }
     
 
     /**
      * This will just get the heightmap value at the supplied point,
      * not an interpolated (actual) height value.
+     * Jorden: Keeper
      */   
     
     protected float getHeightmapHeight(int x, int z) {
@@ -439,61 +437,27 @@ public class TerrainQuad extends Node implements Terrain {
     	QuadPoint quad = new QuadPoint(x, z, children, size);
     	return quad.calculateHeightMap(x,z);
     }
-
-
-    /**
-     * is the 2d point inside the terrain?
-     * @param x local coordinate
-     * @param z local coordinate
-     */
-    private boolean isInside(int x, int z) {
-        if (x < 0 || z < 0 || x > totalSize || z > totalSize)
-            return false;
-        return true;
-    }
-
-    /**
-     * Used for searching for a child and keeping
-     * track of its quadrant
-     */
-
-    private QuadrantChild findMatchingChild(int x, int z) {
-    	System.out.println("running 3");
-    	QuadPoint quad = new QuadPoint(x, z, children, size);
-    	return quad.calculateQuadrant(x,z);
-    }
+    
+    // Jorden: Keeper
     
     /**
      * Get the interpolated height of the terrain at the specified point.
      * @param xz the location to get the height for
      * @return Float.NAN if the value does not exist, or the coordinates are outside of the terrain
      */
+    
     public float getHeight(Vector2f xz) {
         // offset
         float x = (float)(((xz.x - getWorldTranslation().x) / getWorldScale().x) + (float)(totalSize-1) / 2f);
         float z = (float)(((xz.y - getWorldTranslation().z) / getWorldScale().z) + (float)(totalSize-1) / 2f);
-        if (!isInside((int)x, (int)z))
+        if (!Utils.isInside((int)x, (int)z, totalSize))
             return Float.NaN;
-        float height = getHeight((int)x, (int)z, (x%1f), (z%1f));
+        float height = TerrainHeight.getHeight((int)x, (int)z, (x%1f), (z%1f), this);
         height *= getWorldScale().y;
         return height;
     }
 
-    /*
-     * gets an interpolated value at the specified point
-     */
-    protected float getHeight(int x, int z, float xm, float zm) {
-        
-        QuadrantChild match = findMatchingChild(x,z);
-        if (match != null) {
-            if (match.child instanceof TerrainQuad) {
-                return ((TerrainQuad) match.child).getHeight(match.col, match.row, xm, zm);
-            } else if (match.child instanceof TerrainPatch) {
-                return ((TerrainPatch) match.child).getHeight(match.col, match.row, xm, zm);
-            }
-        }
-        return Float.NaN;
-    }
+
     
     // Jorden: Keeper
 
@@ -507,14 +471,7 @@ public class TerrainQuad extends Node implements Terrain {
     }
     
     
-    public void setHeight(Vector2f xz, float height) {
-        List<Vector2f> coord = new ArrayList<Vector2f>();
-        coord.add(xz);
-        List<Float> h = new ArrayList<Float>();
-        h.add(height);
-
-        setHeight(coord, h);
-    }
+    // Jorden: keeper
 
     public void adjustHeight(Vector2f xz, float delta) {
         List<Vector2f> coord = new ArrayList<Vector2f>();
@@ -524,149 +481,42 @@ public class TerrainQuad extends Node implements Terrain {
 
         adjustHeight(coord, h);
     }
+    
+    // Jorden: Keeper
+    
+    public  void setHeight(Vector2f xz, float height) {
+        List<Vector2f> coord = new ArrayList<Vector2f>();
+        coord.add(xz);
+        List<Float> h = new ArrayList<Float>();
+        h.add(height);
 
-    public void setHeight(List<Vector2f> xz, List<Float> height) {
-        setHeight(xz, height, true);
+        setHeight(coord, h);
     }
+    
+    
+    // Jorden: Kkeeper
 
     public void adjustHeight(List<Vector2f> xz, List<Float> height) {
-        setHeight(xz, height, false);
+        TerrainHeight.setHeight(xz, height, false, this);
     }
-
-    protected void setHeight(List<Vector2f> xz, List<Float> height, boolean overrideHeight) {
-        if (xz.size() != height.size())
-            throw new IllegalArgumentException("Both lists must be the same length!");
-
-        int halfSize = totalSize / 2;
-
-        List<LocationHeight> locations = new ArrayList<LocationHeight>();
-
-        // offset
-        for (int i=0; i<xz.size(); i++) {
-            int x = Math.round((xz.get(i).x / getWorldScale().x) + halfSize);
-            int z = Math.round((xz.get(i).y / getWorldScale().z) + halfSize);
-            if (!isInside(x, z))
-                continue;
-            locations.add(new LocationHeight(x,z,height.get(i)));
-        }
-
-        setHeight(locations, overrideHeight); // adjust height of the actual mesh
-
-        // signal that the normals need updating
-        for (int i=0; i<xz.size(); i++)
-            TerrainNormals.setNormalRecalcNeeded(xz.get(i), this );
+    
+    // Jorden: keeper
+    
+    public void setHeight(List<Vector2f> xz, List<Float> height) {
+        TerrainHeight.setHeight(xz, height, true, this);
     }
+    
 
-    protected class LocationHeight {
-        int x;
-        int z;
-        float h;
-
-        LocationHeight(){}
-
-        LocationHeight(int x, int z, float h){
-            this.x = x;
-            this.z = z;
-            this.h = h;
-        }
-    }
-
+    
+    // Jorden: keeper
+    
     protected void setHeight(List<LocationHeight> locations, boolean overrideHeight) {
-        if (children == null)
-            return;
-
-        List<LocationHeight> quadLH1 = new ArrayList<LocationHeight>();
-        List<LocationHeight> quadLH2 = new ArrayList<LocationHeight>();
-        List<LocationHeight> quadLH3 = new ArrayList<LocationHeight>();
-        List<LocationHeight> quadLH4 = new ArrayList<LocationHeight>();
-        Spatial quad1 = null;
-        Spatial quad2 = null;
-        Spatial quad3 = null;
-        Spatial quad4 = null;
-
-        // get the child quadrants
-        for (int i = children.size(); --i >= 0;) {
-            Spatial spat = children.get(i);
-            int childQuadrant = 0;
-            if (spat instanceof TerrainQuad) {
-                childQuadrant = ((TerrainQuad) spat).getQuadrant();
-            } else if (spat instanceof TerrainPatch) {
-                childQuadrant = ((TerrainPatch) spat).getQuadrant();
-            }
-
-            if (childQuadrant == 1)
-                quad1 = spat;
-            else if (childQuadrant == 2)
-                quad2 = spat;
-            else if (childQuadrant == 3)
-                quad3 = spat;
-            else if (childQuadrant == 4)
-                quad4 = spat;
-        }
-
-        int split = (size + 1) >> 1;
-
-        // distribute each locationHeight into the quadrant it intersects
-        for (LocationHeight lh : locations) {
-            int quad = Utils.findQuadrant(lh.x, lh.z, size);
-            int col = lh.x;
-            int row = lh.z;
-
-            if ((quad & 1) != 0) {
-                quadLH1.add(lh);
-            }
-            if ((quad & 2) != 0) {
-                row = lh.z - split + 1;
-                quadLH2.add(new LocationHeight(lh.x, row, lh.h));
-            }
-            if ((quad & 4) != 0) {
-                col = lh.x - split + 1;
-                quadLH3.add(new LocationHeight(col, lh.z, lh.h));
-            }
-            if ((quad & 8) != 0) {
-                col = lh.x - split + 1;
-                row = lh.z - split + 1;
-                quadLH4.add(new LocationHeight(col, row, lh.h));
-            }
-        }
-
-        // send the locations to the children
-        if (!quadLH1.isEmpty()) {
-            if (quad1 instanceof TerrainQuad)
-                ((TerrainQuad)quad1).setHeight(quadLH1, overrideHeight);
-            else if(quad1 instanceof TerrainPatch)
-                ((TerrainPatch)quad1).setHeight(quadLH1, overrideHeight);
-        }
-
-        if (!quadLH2.isEmpty()) {
-            if (quad2 instanceof TerrainQuad)
-                ((TerrainQuad)quad2).setHeight(quadLH2, overrideHeight);
-            else if(quad2 instanceof TerrainPatch)
-                ((TerrainPatch)quad2).setHeight(quadLH2, overrideHeight);
-        }
-
-        if (!quadLH3.isEmpty()) {
-            if (quad3 instanceof TerrainQuad)
-                ((TerrainQuad)quad3).setHeight(quadLH3, overrideHeight);
-            else if(quad3 instanceof TerrainPatch)
-                ((TerrainPatch)quad3).setHeight(quadLH3, overrideHeight);
-        }
-
-        if (!quadLH4.isEmpty()) {
-            if (quad4 instanceof TerrainQuad)
-                ((TerrainQuad)quad4).setHeight(quadLH4, overrideHeight);
-            else if(quad4 instanceof TerrainPatch)
-                ((TerrainPatch)quad4).setHeight(quadLH4, overrideHeight);
-        }
+    	TerrainHeight.setHeight(locations, overrideHeight, children, size);
     }
+
 
     protected boolean isPointOnTerrain(int x, int z) {
         return (x >= 0 && x <= totalSize && z >= 0 && z <= totalSize);
-    }
-
-    
-    public int getTerrainSize() {
-        return totalSize;
     }
 
 
@@ -727,22 +577,6 @@ public class TerrainQuad extends Node implements Terrain {
                 }
             }
         return null;
-    }
-
-    protected TerrainQuad findRightQuad() {
-    	return TerrainQuadrants.findRightQuad(this);
-    }
-
-    protected TerrainQuad findDownQuad() {
-	return TerrainQuadrants.findDownQuad(this);
-    }
-
-    protected TerrainQuad findTopQuad() {
-    	return TerrainQuadrants.findTopQuad(this);
-    }
-
-    protected TerrainQuad findLeftQuad() {
-    	return TerrainQuadrants.findLeftQuad(this);
     }
 
 
