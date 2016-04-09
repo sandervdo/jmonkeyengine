@@ -440,11 +440,6 @@ public class TerrainQuad extends Node implements Terrain {
     	return quad.calculateHeightMap(x,z);
     }
 
-    protected Vector3f getMeshNormal(int x, int z) {
-    	System.out.println("running 2");
-    	QuadPoint quad = new QuadPoint(x, z, children, size);
-    	return quad.calculateMeshNormal(x,z);
-    }
 
     /**
      * is the 2d point inside the terrain?
@@ -499,38 +494,18 @@ public class TerrainQuad extends Node implements Terrain {
         }
         return Float.NaN;
     }
+    
+    // Jorden: Keeper
 
     public Vector3f getNormal(Vector2f xz) {
         // offset
         float x = (float)(((xz.x - getWorldTranslation().x) / getWorldScale().x) + (float)(totalSize-1) / 2f);
         float z = (float)(((xz.y - getWorldTranslation().z) / getWorldScale().z) + (float)(totalSize-1) / 2f);
-        Vector3f normal = getNormal(x, z, xz);
+        Vector3f normal = TerrainNormals.getNormal(x, z, xz, this);
         
         return normal;
     }
     
-    protected Vector3f getNormal(float x, float z, Vector2f xz) {
-        x-=0.5f;
-        z-=0.5f;
-        float col = FastMath.floor(x);
-        float row = FastMath.floor(z);
-        boolean onX = false;
-        if(1 - (x - col)-(z - row) < 0) // what triangle to interpolate on
-            onX = true;
-        // v1--v2  ^
-        // |  / |  |
-        // | /  |  |
-        // v3--v4  | Z
-        //         |
-        // <-------Y
-        //     X 
-        Vector3f n1 = getMeshNormal((int) FastMath.ceil(x), (int) FastMath.ceil(z));
-        Vector3f n2 = getMeshNormal((int) FastMath.floor(x), (int) FastMath.ceil(z));
-        Vector3f n3 = getMeshNormal((int) FastMath.ceil(x), (int) FastMath.floor(z));
-        Vector3f n4 = getMeshNormal((int) FastMath.floor(x), (int) FastMath.floor(z));
-        
-        return n1.add(n2).add(n3).add(n4).normalize();
-    }
     
     public void setHeight(Vector2f xz, float height) {
         List<Vector2f> coord = new ArrayList<Vector2f>();
@@ -579,7 +554,7 @@ public class TerrainQuad extends Node implements Terrain {
 
         // signal that the normals need updating
         for (int i=0; i<xz.size(); i++)
-            TerrainModifyNormals.setNormalRecalcNeeded(xz.get(i), this );
+            TerrainNormals.setNormalRecalcNeeded(xz.get(i), this );
     }
 
     protected class LocationHeight {
@@ -879,7 +854,7 @@ public class TerrainQuad extends Node implements Terrain {
         if ( !(getParent() instanceof TerrainQuad) ) {
             BoundingBox all = new BoundingBox(getWorldTranslation(), totalSize, totalSize, totalSize);
             affectedAreaBBox = all;
-            TerrainModifyNormals.updateNormals(this);
+            TerrainNormals.updateNormals(this);
         }
     }
 

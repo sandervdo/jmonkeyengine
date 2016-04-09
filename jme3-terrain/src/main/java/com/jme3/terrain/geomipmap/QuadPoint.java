@@ -88,9 +88,9 @@ public class QuadPoint {
 
                 if (match) {
                     if (spat instanceof TerrainQuad) {
-                        return ((TerrainQuad) spat).getMeshNormal(col, row);
+                        return TerrainNormals.getMeshNormal(col, row, (TerrainQuad) spat);
                     } else if (spat instanceof TerrainPatch) {
-                        return ((TerrainPatch) spat).getMeshNormal(col, row);
+                        return TerrainNormals.getMeshNormal(col, row, (TerrainQuad) spat);
                     }
                 }
 
