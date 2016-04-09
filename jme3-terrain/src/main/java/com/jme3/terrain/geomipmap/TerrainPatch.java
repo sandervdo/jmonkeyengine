@@ -273,12 +273,7 @@ public class TerrainPatch extends Geometry {
                          getMesh().getFloatBuffer(Type.TexCoord).get(idx*2+1) );
     }
     
-    public float getHeightmapHeight(float x, float z) {
-        if (x < 0 || z < 0 || x >= size || z >= size)
-            return 0;
-        int idx = (int) (z * size + x);
-        return getMesh().getFloatBuffer(Type.Position).get(idx*3+1); // 3 floats per entry (x,y,z), the +1 is to get the Y
-    }
+
     
     /**
      * Get the triangle of this geometry at the specified local coordinate.

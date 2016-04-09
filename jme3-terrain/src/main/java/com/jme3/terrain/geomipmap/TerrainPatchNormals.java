@@ -76,15 +76,15 @@ public class TerrainPatchNormals {
         	for (int i=0; i<s+1; i++) {
         		// Left or Right
             	if (x <= 1 && ((x == 0 && right != null) || (x == 1 && left != null))) {
-            		rootPoint.set(0, tp.getHeightmapHeight((x == 0 ? s : 0),i), 0);
-                    leftPoint.set(-1, (x == 0 ? tp : left).getHeightmapHeight(s-1,i), 0);
-                    rightPoint.set(1, (x == 1 ? tp : right).getHeightmapHeight(1,i), 0);
+            		rootPoint.set(0, getHeightmapHeight((x == 0 ? s : 0),i, tp), 0);
+                    leftPoint.set(-1, getHeightmapHeight(s-1,i, (x == 0 ? tp : left)), 0);
+                    rightPoint.set(1, getHeightmapHeight(1,i, (x == 1 ? tp : right)), 0);
                     
                     if (i == 0) { // top point
-                    	bottomPoint.set(0, tp.getHeightmapHeight((x == 0 ? s : 0),i+1), 1);
+                    	bottomPoint.set(0, getHeightmapHeight((x == 0 ? s : 0),i+1, tp), 1);
                     	
                         if (top != null) {
-                            topPoint.set(0, top.getHeightmapHeight((x == 0 ? s : 0),s-1), -1);
+                            topPoint.set(0, getHeightmapHeight((x == 0 ? s : 0),s-1, top), -1);
                             setInBuffer(top.getMesh(), (x == 0 ? (s+1)*(s+1)-1 : (s+1)*s), normal, tangent, binormal);
                         } 
                         
@@ -92,10 +92,10 @@ public class TerrainPatchNormals {
                         setInBuffer(tp.getMesh(), (x == 0 ? s : 0), normal, tangent, binormal);
                         setInBuffer((x == 0 ? right : left).getMesh(), (x == 0 ? 0 : s), normal, tangent, binormal);
                     } else if (i == s) { // bottom point
-                        topPoint.set(0, tp.getHeightmapHeight((x == 0 ? s : 0), (x == 0 ? s-1 : i - 1)), -1);
+                        topPoint.set(0, getHeightmapHeight((x == 0 ? s : 0), (x == 0 ? s-1 : i - 1), tp), -1);
                         
                         if (bottom != null) {
-                            bottomPoint.set(0, bottom.getHeightmapHeight((x == 0 ? s : 0),1), 1);
+                            bottomPoint.set(0, getHeightmapHeight((x == 0 ? s : 0),1, bottom), 1);
                             setInBuffer(bottom.getMesh(), (x == 0 ? s : 0), normal, tangent, binormal);                            
                         }
                         
@@ -104,8 +104,8 @@ public class TerrainPatchNormals {
                         setInBuffer((x == 0 ? right : left).getMesh(), (x == 0 ? (s+1)*s : (s+1)*(s+1)-1), normal, tangent, binormal);
                         
                     } else { // all in the middle
-                        topPoint.set(0, tp.getHeightmapHeight((x == 0 ? s : 0),i-1), -1);
-                        bottomPoint.set(0, tp.getHeightmapHeight((x == 0 ? s : 0),i+1), 1);
+                        topPoint.set(0, getHeightmapHeight((x == 0 ? s : 0),i-1, tp), -1);
+                        bottomPoint.set(0, getHeightmapHeight((x == 0 ? s : 0),i+1, tp), 1);
                         averageNormalsTangents(topPoint, rootPoint, leftPoint, bottomPoint, rightPoint, normal, tangent, binormal, tp);
                         setInBuffer(tp.getMesh(), (x == 0 ? (s+1)*(i+1)-1 : (s+1)*i), normal, tangent, binormal);
                         setInBuffer((x == 0 ? right : left).getMesh(), (x == 0 ? (s+1)*i : (s+1)*(i+1)-1), normal, tangent, binormal);
@@ -113,13 +113,13 @@ public class TerrainPatchNormals {
             	} 
             	// Top or Bottom
             	else if (x <= 3 && ((x == 2 && top != null) || (x == 3 && bottom != null))) {
-        			rootPoint.set(0, tp.getHeightmapHeight(i,(x == 2 ? 0 : s)), 0);
-                    topPoint.set(0, (x == 2 ? top : tp).getHeightmapHeight(i,s-1), -1);
-                    bottomPoint.set(0, (x == 3 ? bottom : tp).getHeightmapHeight(i,1), 1);
+        			rootPoint.set(0, getHeightmapHeight(i,(x == 2 ? 0 : s), tp), 0);
+                    topPoint.set(0, getHeightmapHeight(i,s-1, (x == 2 ? top : tp)), -1);
+                    bottomPoint.set(0, getHeightmapHeight(i,1, (x == 3 ? bottom : tp)), 1);
                     
                     if (i != 0 && i != s) { // Other cases handled by this patch elsewhere
-                    	leftPoint.set(-1, tp.getHeightmapHeight(i-1,(x == 2 ? 0 : s)), 0);
-                        rightPoint.set(1, tp.getHeightmapHeight(i+1,(x == 2 ? 0 : s)), 0);
+                    	leftPoint.set(-1, getHeightmapHeight(i-1,(x == 2 ? 0 : s), tp), 0);
+                        rightPoint.set(1, getHeightmapHeight(i+1,(x == 2 ? 0 : s), tp), 0);
                         averageNormalsTangents(topPoint, rootPoint, leftPoint, bottomPoint, rightPoint, normal, tangent, binormal, tp);
                         setInBuffer(tp.getMesh(), (x == 2 ? i : (s+1)*(s)+i), normal, tangent, binormal);
                         setInBuffer((x == 2 ? top : bottom).getMesh(), (x == 2 ? (s+1)*(s)+i : i), normal, tangent, binormal);
@@ -187,4 +187,12 @@ public class TerrainPatchNormals {
         normal.z = nb.get(index+2);
         return normal;
     }
+    
+    public static float getHeightmapHeight(float x, float z, TerrainPatch tp) {
+        if (x < 0 || z < 0 || x >= tp.getSize()|| z >= tp.getSize())
+            return 0;
+        int idx = (int) (z * tp.getSize()+ x);
+        return tp.getMesh().getFloatBuffer(Type.Position).get(idx*3+1); // 3 floats per entry (x,y,z), the +1 is to get the Y
+    }
+    
 }
