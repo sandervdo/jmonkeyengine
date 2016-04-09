@@ -509,79 +509,15 @@ public class TerrainPatch extends Geometry {
                 return 0;
         
         if(other instanceof Ray)
-            return collideWithRay((Ray)other, results);
+            return TerrainPatchCollision.collideWithRay((Ray)other, results);
         else if (other instanceof BoundingVolume)
-            return collideWithBoundingVolume((BoundingVolume)other, results);
+            return TerrainPatchCollision.collideWithBoundingVolume((BoundingVolume)other, results, this);
         else {
             throw new UnsupportedCollisionException("TerrainPatch cannnot collide with "+other.getClass().getName());
         }
     }
 
 
-    private int collideWithRay(Ray ray, CollisionResults results) {
-        // This should be handled in the root terrain quad
-        return 0;
-    }
-
-    private int collideWithBoundingVolume(BoundingVolume boundingVolume, CollisionResults results) {
-        if (boundingVolume instanceof BoundingBox)
-            return collideWithBoundingBox((BoundingBox)boundingVolume, results);
-        else if(boundingVolume instanceof BoundingSphere) {
-            BoundingSphere sphere = (BoundingSphere) boundingVolume;
-            BoundingBox bbox = new BoundingBox(boundingVolume.getCenter().clone(), sphere.getRadius(),
-                                                           sphere.getRadius(),
-                                                           sphere.getRadius());
-            return collideWithBoundingBox(bbox, results);
-        }
-        return 0;
-    }
-
-    protected Vector3f worldCoordinateToLocal(Vector3f loc) {
-        Vector3f translated = new Vector3f();
-        translated.x = loc.x/getWorldScale().x - getWorldTranslation().x;
-        translated.y = loc.y/getWorldScale().y - getWorldTranslation().y;
-        translated.z = loc.z/getWorldScale().z - getWorldTranslation().z;
-        return translated;
-    }
-
-    /**
-     * This most definitely is not optimized.
-     */
-    private int collideWithBoundingBox(BoundingBox bbox, CollisionResults results) {
-        
-        // test the four corners, for cases where the bbox dimensions are less than the terrain grid size, which is probably most of the time
-        Vector3f topLeft = worldCoordinateToLocal(new Vector3f(bbox.getCenter().x-bbox.getXExtent(), 0, bbox.getCenter().z-bbox.getZExtent()));
-        Vector3f topRight = worldCoordinateToLocal(new Vector3f(bbox.getCenter().x+bbox.getXExtent(), 0, bbox.getCenter().z-bbox.getZExtent()));
-        Vector3f bottomLeft = worldCoordinateToLocal(new Vector3f(bbox.getCenter().x-bbox.getXExtent(), 0, bbox.getCenter().z+bbox.getZExtent()));
-        Vector3f bottomRight = worldCoordinateToLocal(new Vector3f(bbox.getCenter().x+bbox.getXExtent(), 0, bbox.getCenter().z+bbox.getZExtent()));
-
-        Triangle t = getTriangle(topLeft.x, topLeft.z);
-        if (t != null && bbox.collideWith(t, results) > 0)
-            return 1;
-        t = getTriangle(topRight.x, topRight.z);
-        if (t != null && bbox.collideWith(t, results) > 0)
-            return 1;
-        t = getTriangle(bottomLeft.x, bottomLeft.z);
-        if (t != null && bbox.collideWith(t, results) > 0)
-            return 1;
-        t = getTriangle(bottomRight.x, bottomRight.z);
-        if (t != null && bbox.collideWith(t, results) > 0)
-            return 1;
-        
-        // box is larger than the points on the terrain, so test against the points
-        for (float z=topLeft.z; z<bottomLeft.z; z+=1) {
-            for (float x=topLeft.x; x<topRight.x; x+=1) {
-                
-                if (x < 0 || z < 0 || x >= size || z >= size)
-                    continue;
-                t = getTriangle(x,z);
-                if (t != null && bbox.collideWith(t, results) > 0)
-                    return 1;
-            }
-        }
-
-        return 0;
-    }
 
 
     @Override
