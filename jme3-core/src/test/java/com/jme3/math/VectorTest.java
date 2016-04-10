@@ -384,7 +384,16 @@ public class VectorTest {
     
     @Test
     public void interpolateTest() {
-    	fail("To be implemented");
+    	Vector a = Vector.ZERO(4);
+    	Vector b = Vector.ONES(4);
+    	
+    	a.interpolateLocal(b, 0.5f);
+    	assert(checkEachValue(a, 0.5f));
+    	a.makeZERO();
+    	b.set(new float[]{20, 23, 6, 7});
+    	Vector c = new Vector(2, 3, 4, 5);
+    	a.interpolateLocal(b, c, 0.2f);
+    	assert(checkAllValues(a, new float[]{16.4f, 19f, 5.6000004f, 6.6f}));
     }
     
     @Test
