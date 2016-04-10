@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 
 
 import com.jme3.collision.CollisionResults;
+import com.jme3.material.Material;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
@@ -51,22 +52,25 @@ public class TerrainQuadTest {
 	}
 	
 	@Test
-	public void testCalculateLod() {
-		Assert.assertEquals(0, 0);
-		
+	public void testClone() {
+		TerrainQuad clone = tquad.clone(true);
+		Assert.assertNotSame(clone, tquad);
+		Assert.assertEquals(clone.getName(), tquad.getName());
+		Assert.assertEquals(clone.getSize(), tquad.getSize());
+		Assert.assertEquals(clone.getTotalSize(), tquad.getTotalSize());
+		Assert.assertEquals(clone.getOffsetAmount(), tquad.getOffsetAmount());
+		Assert.assertEquals(clone.getQuadrant(), tquad.getQuadrant());
 	}
 	
-
+	@Test
+	public void testGetMaterial() {
+		Material answer = tquad.getMaterial(zero3f);
+		Assert.assertNull(answer);
+	}	
 	
-	@Test 
-	public void checkGenerateEntropy() {
-		ProgressMonitor progMonitor = null;
-		TerrainTransform.generateEntropy(progMonitor, tquad);
-		// This is hard to test as it is a recursive function that does modify progressmonitor which is really difficult to initiate. But it should execute in this scenario so it is a small test.
+	@Test
+	public void testSetNeedToRecalculateNormals() {
+		Assert.assertNull(tquad.getAffectedAreaBBox());
 	}
-	
-	
-	
-	
 
 }

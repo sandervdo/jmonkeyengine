@@ -18,7 +18,6 @@ public  class TerrainHeight {
      */   
     
     protected static float getHeightmapHeight(int x, int z, TerrainQuad tq) {
-    	System.out.println("running 1");
     	QuadPoint quad = new QuadPoint(x, z, tq.getChildren(), tq.getSize());
     	return quad.calculateHeightMap(x,z);
     }
@@ -39,7 +38,6 @@ public  class TerrainHeight {
      */
 
     private static QuadrantChild findMatchingChild(int x, int z, SafeArrayList<Spatial> children, int size) {
-    	System.out.println("running 3");
     	QuadPoint quad = new QuadPoint(x, z, children, size);
     	return quad.calculateQuadrant(x,z);
     }
