@@ -19,14 +19,11 @@ public class TerrainCreatePatch {
      *			the height data.
      */
     public static void split(int blockSize, float[] heightMap, TerrainQuad tq) {
-    	System.out.println(tq.getChildren().size());
         if ((tq.getSize() >> 1) + 1 <= blockSize) {
             createQuadPatch(heightMap, tq);
         } else {
             createQuad(blockSize, heightMap, tq);
         }
-        System.out.println(tq.getChildren().size());
-
     }
     
     protected static Vector2f createBasicOffset(Vector2f offset) {
