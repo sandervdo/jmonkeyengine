@@ -1037,7 +1037,7 @@ public class ParticleEmitter extends Geometry {
             lastPos = new Vector3f();
         }
 
-        lastPos.set(getWorldTranslation());
+        lastPos.set(getWorldTranslation().toVector3f());
 
         BoundingBox bbox = (BoundingBox) this.getMesh().getBound();
         bbox.setMinMax(min, max);

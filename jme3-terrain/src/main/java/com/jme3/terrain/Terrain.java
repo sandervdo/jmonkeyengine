@@ -32,6 +32,8 @@
 package com.jme3.terrain;
 
 import com.jme3.material.Material;
+import com.jme3.math.Vector;
+
 import java.util.List;
 
 /**

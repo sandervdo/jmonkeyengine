@@ -485,7 +485,7 @@ public final class BufferUtils {
      */
     public static void normalizeVector3(FloatBuffer buf, int index) {
         TempVars vars = TempVars.get();
-        Vector3f tempVec3 = vars.vect1;
+        Vector3f tempVec3 = vars.vect1.toVector3f();
         populateFromBuffer(tempVec3, buf, index);
         tempVec3.normalizeLocal();
         setInBuffer(tempVec3, buf, index);
@@ -505,7 +505,7 @@ public final class BufferUtils {
      */
     public static void addInBuffer(Vector3f toAdd, FloatBuffer buf, int index) {
         TempVars vars = TempVars.get();
-        Vector3f tempVec3 = vars.vect1;
+        Vector3f tempVec3 = vars.vect1.toVector3f();
         populateFromBuffer(tempVec3, buf, index);
         tempVec3.addLocal(toAdd);
         setInBuffer(tempVec3, buf, index);
@@ -525,7 +525,7 @@ public final class BufferUtils {
      */
     public static void multInBuffer(Vector3f toMult, FloatBuffer buf, int index) {
         TempVars vars = TempVars.get();
-        Vector3f tempVec3 = vars.vect1;
+        Vector3f tempVec3 = vars.vect1.toVector3f();
         populateFromBuffer(tempVec3, buf, index);
         tempVec3.multLocal(toMult);
         setInBuffer(tempVec3, buf, index);
@@ -547,7 +547,7 @@ public final class BufferUtils {
      */
     public static boolean equals(Vector3f check, FloatBuffer buf, int index) {
         TempVars vars = TempVars.get();
-        Vector3f tempVec3 = vars.vect1;
+        Vector3f tempVec3 = vars.vect1.toVector3f();
         populateFromBuffer(tempVec3, buf, index);
         boolean eq = tempVec3.equals(check);
         vars.release();

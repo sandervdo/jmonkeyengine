@@ -894,13 +894,13 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
     public Vector2f toVector2f() {
     	return new Vector2f(this.values[0], this.values[1]);
     }
-    public Vector toVector(Vector2f v) {
+    public static Vector toVector(Vector2f v) {
     	return new Vector(v.x, v.y);
     }
-	public Vector toVector(Vector3f v) {
+	public static Vector toVector(Vector3f v) {
 	    return new Vector(v.x, v.y, v.z);
     }
-	public Vector toVector(Vector4f v) {
+	public static Vector toVector(Vector4f v) {
 		return new Vector(v.x, v.y, v.z, v.w);
 	}
 }

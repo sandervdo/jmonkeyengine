@@ -1,5 +1,6 @@
 package com.jme3.terrain.geomipmap;
 
+import com.jme3.math.Vector;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Spatial;
 import com.jme3.util.SafeArrayList;
@@ -80,7 +81,7 @@ public class QuadPoint {
         return Float.NaN;
     }
     
-    public Vector3f calculateMeshNormal(int x, int z) {
+    public Vector calculateMeshNormal(int x, int z) {
         if (children != null) {
             for (int i = children.size(); --i >= 0;) {
             	Spatial spat = children.get(i);

@@ -36,6 +36,7 @@ import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
 import com.jme3.export.OutputCapsule;
 import com.jme3.math.Quaternion;
+import com.jme3.math.Vector;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Spatial;
 import com.jme3.util.TempVars;
@@ -154,7 +155,7 @@ public class SpatialTrack implements Track {
         }
         
         if (translations != null)
-            spatial.setLocalTranslation(tempV);
+            spatial.setLocalTranslation(Vector.toVector(tempV));
         if (rotations != null)
             spatial.setLocalRotation(tempQ);
         if (scales != null) {

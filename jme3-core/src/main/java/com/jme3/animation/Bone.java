@@ -466,7 +466,7 @@ public final class Bone implements Savable {
         }
 
         if (attachNode != null) {
-            attachNode.setLocalTranslation(modelPos);
+            attachNode.setLocalTranslation(Vector.toVector(modelPos));
             attachNode.setLocalRotation(modelRot);
             attachNode.setLocalScale(modelScale);
         }
@@ -602,7 +602,7 @@ public final class Bone implements Savable {
         
         //if there is an attached Node we need to set it's local transforms too.
         if(attachNode != null){
-            attachNode.setLocalTranslation(translation);
+            attachNode.setLocalTranslation(Vector.toVector(translation));
             attachNode.setLocalRotation(rotation);
         }
     }
