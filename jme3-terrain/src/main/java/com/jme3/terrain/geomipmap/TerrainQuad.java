@@ -348,7 +348,6 @@ public class TerrainQuad extends Node implements Terrain {
      * Generate the entropy values for the terrain for the "perspective" LOD
      * calculator. This routine can take a long time to run!
      * @param progressMonitor optional
-     * Jorden: keeper
      */
     public void generateEntropy(ProgressMonitor progressMonitor) {
     	TerrainTransform.generateEntropy(progressMonitor, this);
@@ -361,8 +360,6 @@ public class TerrainQuad extends Node implements Terrain {
     public Material getMaterial() {
         return getMaterial(null);
     }
-    
-    // Jorden: keeper
     
     public Material getMaterial(Vector3f worldLocation) {
         // get the material from one of the children. They all share the same material
@@ -388,7 +385,6 @@ public class TerrainQuad extends Node implements Terrain {
      * A handy method that will attach all bounding boxes of this terrain
      * to the node you supply.
      * Useful to visualize the bounding boxes when debugging.
-     * Jorden: Unused, keeper
      * @param parent that will get the bounding box shapes of the terrain attached to
      */
     public void attachBoundChildren(Node parent) {
@@ -410,7 +406,6 @@ public class TerrainQuad extends Node implements Terrain {
 
     /**
      * used by attachBoundChildren()
-     * Jorden: Keeper
      */
     private void attachBoundingBox(BoundingBox bb, Node parent) {
         WireBox wb = new WireBox(bb.getXExtent(), bb.getYExtent(), bb.getZExtent());
@@ -422,7 +417,6 @@ public class TerrainQuad extends Node implements Terrain {
     
     /**
      * This will cause all normals for this terrain quad to be recalculated
-     * Jorden: keeper
      */
     protected void setNeedToRecalculateNormals() {
         affectedAreaBBox = new BoundingBox(getWorldTranslation(), Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
@@ -442,8 +436,6 @@ public class TerrainQuad extends Node implements Terrain {
         }
     }
     
-    // Jorden: Keeper
-
     public float getHeightmapHeight(Vector2f xz) {
     	return TerrainHeight.getHeightmapHeight(xz, this);
     }
@@ -456,12 +448,10 @@ public class TerrainQuad extends Node implements Terrain {
      */   
     
     protected float getHeightmapHeight(int x, int z) {
-    	System.out.println("running 1");
+
     	QuadPoint quad = new QuadPoint(x, z, children, size);
     	return quad.calculateHeightMap(x,z);
     }
-    
-    // Jorden: Keeper
     
     /**
      * Get the interpolated height of the terrain at the specified point.
@@ -481,9 +471,6 @@ public class TerrainQuad extends Node implements Terrain {
     }
 
 
-    
-    // Jorden: Keeper
-
     public Vector3f getNormal(Vector2f xz) {
         // offset
         float x = (float)(((xz.x - getWorldTranslation().x) / getWorldScale().x) + (float)(totalSize-1) / 2f);
@@ -493,8 +480,6 @@ public class TerrainQuad extends Node implements Terrain {
         return normal;
     }
     
-    
-    // Jorden: keeper
 
     public void adjustHeight(Vector2f xz, float delta) {
         List<Vector2f> coord = new ArrayList<Vector2f>();
@@ -505,7 +490,6 @@ public class TerrainQuad extends Node implements Terrain {
         adjustHeight(coord, h);
     }
     
-    // Jorden: Keeper
     
     public  void setHeight(Vector2f xz, float height) {
         List<Vector2f> coord = new ArrayList<Vector2f>();
@@ -517,21 +501,16 @@ public class TerrainQuad extends Node implements Terrain {
     }
     
     
-    // Jorden: Kkeeper
-
     public void adjustHeight(List<Vector2f> xz, List<Float> height) {
         TerrainHeight.setHeight(xz, height, false, this);
     }
-    
-    // Jorden: keeper
+
     
     public void setHeight(List<Vector2f> xz, List<Float> height) {
         TerrainHeight.setHeight(xz, height, true, this);
     }
     
 
-    
-    // Jorden: keeper
     
     protected void setHeight(List<LocationHeight> locations, boolean overrideHeight) {
     	TerrainHeight.setHeight(locations, overrideHeight, children, size);
