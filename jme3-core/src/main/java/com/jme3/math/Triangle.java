@@ -71,9 +71,9 @@ public class Triangle extends AbstractTriangle implements Savable, java.io.Seria
      * TODO: Refactor to use native Vector instead of converted ones
      */
     public Triangle(Vector p1, Vector p2, Vector p3) {
-        pointa.set(p1);
-        pointb.set(p2);
-        pointc.set(p3);
+        pointa.set(new Vector3f(p1.getX(), p1.getY(), p1.getZ()));
+        pointb.set(new Vector3f(p2.getX(), p2.getY(), p2.getZ()));
+        pointc.set(new Vector3f(p3.getX(), p3.getY(), p3.getZ()));
     }
 
     /**

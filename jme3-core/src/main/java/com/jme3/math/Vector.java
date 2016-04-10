@@ -875,4 +875,32 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
     public float getY() { return this.values[1]; }
     public float getZ() { return this.values[2]; }
     public float getW() { return this.values[3]; }
+    public void setX(float f) { this.values[0] = f; }
+    public void setY(float f) { this.values[1] = f; }
+    public void setZ(float f) { this.values[2] = f; }
+    public void setW(float f) { this.values[3] = f; }
+    
+    /**
+     * Fallback.
+     * Whenever we need a Vector in a Vector3f form
+     * @return VectorXf
+     */
+    public Vector4f toVector4f() {
+    	return new Vector4f(this.values[0], this.values[1], this.values[2], this.values[3]);
+    }
+    public Vector3f toVector3f() {
+    	return new Vector3f(this.values[0], this.values[1], this.values[2]);
+    }
+    public Vector2f toVector2f() {
+    	return new Vector2f(this.values[0], this.values[1]);
+    }
+    public Vector toVector(Vector2f v) {
+    	return new Vector(v.x, v.y);
+    }
+	public Vector toVector(Vector3f v) {
+	    return new Vector(v.x, v.y, v.z);
+    }
+	public Vector toVector(Vector4f v) {
+		return new Vector(v.x, v.y, v.z, v.w);
+	}
 }

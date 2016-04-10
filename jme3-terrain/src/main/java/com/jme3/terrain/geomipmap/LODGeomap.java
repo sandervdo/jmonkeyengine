@@ -749,20 +749,20 @@ public class LODGeomap extends GeoMap {
 
         TempVars vars = TempVars.get();
         
-        Vector3f rootPoint = vars.vect1;
-        Vector3f rightPoint = vars.vect2;
-        Vector3f leftPoint = vars.vect3;
-        Vector3f topPoint = vars.vect4;
-        Vector3f bottomPoint = vars.vect5;
+        Vector rootPoint = vars.vect1;
+        Vector rightPoint = vars.vect2;
+        Vector leftPoint = vars.vect3;
+        Vector topPoint = vars.vect4;
+        Vector bottomPoint = vars.vect5;
         
-        Vector3f tmp1 = vars.vect6;
+        Vector tmp1 = vars.vect6;
 
         // calculate normals for each polygon
         for (int r = 0; r < getHeight(); r++) {
             for (int c = 0; c < getWidth(); c++) {
 
                 rootPoint.set(0, getValue(c, r), 0);
-                Vector3f normal = vars.vect8;
+                Vector normal = vars.vect8;
 
                 if (r == 0) { // first row
                     if (c == 0) { // first column
@@ -979,7 +979,7 @@ public class LODGeomap extends GeoMap {
      * @param z local z coordinate
      * @return a triangle in world space not local space
      */
-    protected Triangle getTriangleAtPoint(float x, float z, Vector3f scale, Vector3f translation) {
+    protected Triangle getTriangleAtPoint(float x, float z, Vector scale, Vector translation) {
         Triangle tri = getTriangleAtPoint(x, z);
         if (tri != null) {
             tri.get1().multLocal(scale).addLocal(translation);
@@ -999,7 +999,7 @@ public class LODGeomap extends GeoMap {
      * @param translation
      * @return two triangles in world space not local space
      */
-    protected Triangle[] getGridTrianglesAtPoint(float x, float z, Vector3f scale, Vector3f translation) {
+    protected Triangle[] getGridTrianglesAtPoint(float x, float z, Vector scale, Vector translation) {
         Triangle[] tris = getGridTrianglesAtPoint(x, z);
         if (tris != null) {
             tris[0].get1().multLocal(scale).addLocal(translation);
@@ -1041,8 +1041,8 @@ public class LODGeomap extends GeoMap {
             return null;
         }
 
-        Triangle t = new Triangle(new Vector3f(), new Vector3f(), new Vector3f());
-        Triangle t2 = new Triangle(new Vector3f(), new Vector3f(), new Vector3f());
+        Triangle t = new Triangle(new Vector(3), new Vector(3), new Vector(3));
+        Triangle t2 = new Triangle(new Vector(3), new Vector(3), new Vector(3));
 
         float h1 = hdata[index];                // top left
         float h2 = hdata[index + 1];            // top right
@@ -1119,17 +1119,17 @@ public class LODGeomap extends GeoMap {
             return null;
         }
         Vector point = new Vector(x, z);
-        Vector t1 = new Vector(triangles[0].get1().x, triangles[0].get1().z);
-        Vector t2 = new Vector(triangles[0].get2().x, triangles[0].get2().z);
-        Vector t3 = new Vector(triangles[0].get3().x, triangles[0].get3().z);
+        Vector t1 = new Vector(triangles[0].get1().getX(), triangles[0].get1().getZ());
+        Vector t2 = new Vector(triangles[0].get2().getX(), triangles[0].get2().getZ());
+        Vector t3 = new Vector(triangles[0].get3().getX(), triangles[0].get3().getZ());
 
         if (0 != FastMath.pointInsideTriangle(t1, t2, t3, point)) {
             return triangles[0];
         }
 
-        t1.set(triangles[1].get1().x, triangles[1].get1().z);
-        t1.set(triangles[1].get2().x, triangles[1].get2().z);
-        t1.set(triangles[1].get3().x, triangles[1].get3().z);
+        t1.set(triangles[1].get1().getX(), triangles[1].get1().getZ());
+        t1.set(triangles[1].get2().getX(), triangles[1].get2().getZ());
+        t1.set(triangles[1].get3().getX(), triangles[1].get3().getZ());
 
         if (0 != FastMath.pointInsideTriangle(t1, t2, t3, point)) {
             return triangles[1];

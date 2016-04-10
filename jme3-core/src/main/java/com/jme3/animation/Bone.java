@@ -707,8 +707,8 @@ public final class Bone implements Savable {
             // Blend in the new transform.
             TempVars vars = TempVars.get();
 
-            Vector3f tmpV = vars.vect1;
-            Vector3f tmpV2 = vars.vect2;
+            Vector3f tmpV = vars.vect1.toVector3f();
+            Vector3f tmpV2 = vars.vect2.toVector3f();
             Quaternion tmpQ = vars.quat1;
             
             tmpV.set(bindPos).addLocal(translation);

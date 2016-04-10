@@ -99,11 +99,11 @@ public class SpatialTrack implements Track {
     public void setTime(float time, float weight, AnimControl control, AnimChannel channel, TempVars vars) {
         Spatial spatial = control.getSpatial();
         
-        Vector3f tempV = vars.vect1;
-        Vector3f tempS = vars.vect2;
+        Vector3f tempV = vars.vect1.toVector3f();
+        Vector3f tempS = vars.vect2.toVector3f();
         Quaternion tempQ = vars.quat1;
-        Vector3f tempV2 = vars.vect3;
-        Vector3f tempS2 = vars.vect4;
+        Vector3f tempV2 = vars.vect3.toVector3f();
+        Vector3f tempS2 = vars.vect4.toVector3f();
         Quaternion tempQ2 = vars.quat2;
         
         int lastFrame = times.length - 1;
