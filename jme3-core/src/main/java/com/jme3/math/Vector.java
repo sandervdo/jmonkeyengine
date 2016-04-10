@@ -90,7 +90,7 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 	 * @param newValues the values that should be inserted into this Vector.
 	 * @return this Vector after updating
 	 */
-	public Vector set(float[] newValues) {
+	public Vector set(float... newValues) {
 		for (int x = 0; x < this.values.length; x++) {
 			this.values[x] = newValues[x];
 		}
@@ -194,6 +194,90 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 	}
 	
 	/**
+     * <code>cross</code> calculates the cross product of this vector with a
+     * parameter vector v.
+     *
+     * @param v
+     *            the vector to take the cross product of with this.
+     * @return the cross product vector.
+     */
+	public Vector cross(Vector v) {
+		return this.cross(v, null);
+	}
+	
+	/**
+     * <code>cross</code> calculates the cross product of this vector with a
+     * parameter vector v.  The result is stored in <code>result</code>
+     *
+     * @param v
+     *            the vector to take the cross product of with this.
+     * @param result
+     *            the vector to store the cross product result.
+     * @return result, after recieving the cross product vector.
+     */
+	public Vector cross(Vector v,Vector result) {
+		assert(v.values.length >= 3 && result.values.length >= 3);
+        return this.cross(v.getAtIndex(0), v.getAtIndex(1), v.getAtIndex(2), result);
+    }
+	
+	/**
+     * <code>cross</code> calculates the cross product of this vector with a
+     * parameter vector v.  The result is stored in <code>result</code>
+     *
+     * @param otherX
+     *            x component of the vector to take the cross product of with this.
+     * @param otherY
+     *            y component of the vector to take the cross product of with this.
+     * @param otherZ
+     *            z component of the vector to take the cross product of with this.
+     * @param result
+     *            the vector to store the cross product result.
+     * @return result, after recieving the cross product vector.
+     */
+	public Vector cross(float otherX, float otherY, float otherZ, Vector res) {
+		assert(this.values.length >= 3 && res.values.length >= 3);
+		if (res == null) res = new Vector(this.values.length);
+		res.setAtIndex(0, ((res.getAtIndex(1) * otherZ) - (this.getAtIndex(2) * otherY)));
+		res.setAtIndex(1, ((res.getAtIndex(2) * otherX) - (this.getAtIndex(0) * otherZ)));
+		res.setAtIndex(2, ((res.getAtIndex(0) * otherY) - (this.getAtIndex(1) * otherX)));
+		return res;
+	}
+	
+	/**
+     * <code>crossLocal</code> calculates the cross product of this vector
+     * with a parameter vector v.
+     *
+     * @param v
+     *            the vector to take the cross product of with this.
+     * @return this.
+     */
+    public Vector crossLocal(Vector v) {
+        return this.crossLocal(v.getAtIndex(0), v.getAtIndex(1), v.getAtIndex(2));
+    }
+	
+	/**
+     * <code>crossLocal</code> calculates the cross product of this vector
+     * with a parameter vector v.
+     *
+     * @param otherX
+     *            x component of the vector to take the cross product of with this.
+     * @param otherY
+     *            y component of the vector to take the cross product of with this.
+     * @param otherZ
+     *            z component of the vector to take the cross product of with this.
+     * @return this.
+     */
+	public Vector crossLocal(float otherX, float otherY, float otherZ) {
+		assert(this.values.length >= 3);
+		float tempx = (this.getAtIndex(1) * otherZ) - (this.getAtIndex(2) * otherY);
+		float tempy = (this.getAtIndex(2) * otherX) - (this.getAtIndex(0) * otherZ);
+		this.values[2] = (this.getAtIndex(1) * otherY) - (this.values[1] * otherX);
+		this.values[1] = tempx;
+		this.values[0] = tempy;
+		return this;
+	}
+	
+	/**
 	 * Calculates the dot product with the given and current Vector.
 	 * @param v Provided Vector
 	 * @return value of the dot product.
@@ -206,10 +290,31 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 		return res;
 	}
 	
+	/**
+	 * Return a new Vector containing the projection of this Vector onto another Vector
+	 * @param other Vector to project upon
+	 * @return Vector with projection
+	 */
 	public Vector project(Vector other) {
 		float n = this.dot(other);
 		float d = other.lengthSquared();
+//		System.out.println("This Dot: " + n + "  -- Other Length squared: " + d + " n/d: " + n/d);
+//		System.out.println(other.normalize());
+//		
+//		System.out.println();
+//		
 		return new Vector(other).normalizeLocal().multLocal(n/d);
+	}
+	
+	/**
+     * Projects this vector onto another vector, stores the result in this
+     * vector
+     *
+     * @param other The vector to project this vector onto
+     * @return This Vector3f, set to the projection result
+     */
+	public Vector projectLocal(Vector other) {
+		return this.set(this.project(other));
 	}
 	
 	/**
@@ -526,20 +631,66 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 	}	
 	
 	/**
+     * <code>angleBetween</code> returns (in radians) the angle required to
+     * rotate a ray represented by this vector to lie colinear to a ray
+     * described by the given vector. It is assumed that both this vector and
+     * the given vector are unit vectors (iow, normalized).
+     * 
+     * @param otherVector
+     *            the "destination" unit vector
+     * @return the angle in radians.
+     */
+	public float angleBetween(Vector v) {
+		if (v.values.length == 2 && this.values.length == 2) {
+			return FastMath.atan2(v.getAtIndex(1), v.getAtIndex(0)) - FastMath.atan2(this.getAtIndex(1), this.getAtIndex(0));
+		} else {
+			return this.smallestAngleBetween(v);
+		}
+	}
+	
+	/**
 	 * Returns the angle (in Radians) between two Vectors.
 	 * @param v other Vector
 	 * @return angle in Radians
 	 */
-	public float angleBetween(Vector v) {
+	public float smallestAngleBetween(Vector v) {
 		float dotProduct = this.dot(v);
 		float angle = FastMath.acos(dotProduct);
 		return angle;
 	}
 	
+	/**
+	 * <code>getAngle</code> returns (in radians) the angle represented by
+     * this Vector2f as expressed by a conversion from rectangular coordinates (<code>x</code>,&nbsp;<code>y</code>)
+     * to polar coordinates (r,&nbsp;<i>theta</i>).
+     * 
+	 * TODO: Find a better solution then asserting
+	 * @return the angle in radians. [-pi, pi)
+	 */
+	public float getAngle() {
+		assert(this.values.length >= 2);
+		return FastMath.atan2(this.getAtIndex(1), this.getAtIndex(0));
+	}
+	
+	/**
+     * Sets this vector to the interpolation by changeAmnt from this to the finalVec
+     * this=(1-changeAmnt)*this + changeAmnt * finalVec
+     * @param finalVec The final vector to interpolate towards
+     * @param changeAmnt An amount between 0.0 - 1.0 representing a precentage
+     *  change from this towards finalVec
+     */
 	public Vector interpolateLocal(Vector finalVec, float changeAmnt) {
 		return interpolateLocal(this, finalVec, changeAmnt);
 	}
 	
+	/**
+     * Sets this vector to the interpolation by changeAmnt from beginVec to finalVec
+     * this=(1-changeAmnt)*beginVec + changeAmnt * finalVec
+     * @param beginVec the beging vector (changeAmnt=0)
+     * @param finalVec The final vector to interpolate towards
+     * @param changeAmnt An amount between 0.0 - 1.0 representing a precentage
+     *  change from beginVec towards finalVec
+     */
 	public Vector interpolateLocal(Vector beginVec, Vector finalVec, float changeAmnt) {
 		for (int x = 0; x < this.values.length; x++) {
 			this.values[x] = (1 - changeAmnt) * beginVec.getValues()[x] + changeAmnt * finalVec.getValues()[x];
@@ -651,7 +802,7 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 	 * @param index
 	 * @return value at specific index
 	 */
-	public float get(int index) {
+	public float getAtIndex(int index) {
 		if (index < this.values.length) {
 			return this.values[index];
 		}
@@ -663,11 +814,59 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
 	 * @param index
 	 * @param f new value
 	 */
-	public void set(int index, float f) {
+	public void setAtIndex(int index, float f) {
 		if (index < this.values.length) {
 			this.values[index] = f;
 			return;
 		}
 		throw new IllegalArgumentException("index must be between 0 and " + (this.values.length - 1));
 	}
+	
+	/**
+	 * Rotate this Vector around the origin.
+	 * Requires the Vector to have a length of 2! (X and Y)
+	 * 
+	 * @param angle
+	 * @param cw
+	 */
+    public void rotateAroundOrigin(float angle, boolean cw) {
+        if (cw)
+            angle = -angle;
+        float newX = FastMath.cos(angle) * this.getAtIndex(0) - FastMath.sin(angle) * this.getAtIndex(1);
+        float newY = FastMath.sin(angle) * this.getAtIndex(0) + FastMath.cos(angle) * this.getAtIndex(1);
+        this.setAtIndex(0, newX);
+        this.setAtIndex(1, newY);
+    }
+    
+    public static void generateOrthonormalBasis(Vector u, Vector v, Vector w) {
+        w.normalizeLocal();
+        generateComplementBasis(u, v, w);
+    }
+
+    public static void generateComplementBasis(Vector u, Vector v, Vector w) {
+    	assert(u.values.length >= 3);
+    	assert(v.values.length >= 3);
+    	assert(w.values.length >= 3);
+        float fInvLength;
+
+        if (FastMath.abs(w.getAtIndex(0)) >= FastMath.abs(w.getAtIndex(1))) {
+            // w.x or w.z is the largest magnitude component, swap them
+            fInvLength = FastMath.invSqrt(w.getAtIndex(0) * w.getAtIndex(0) + w.getAtIndex(2) * w.getAtIndex(2));
+            u.values[0] = -w.getAtIndex(2) * fInvLength;
+            u.values[1] = 0.0f;
+            u.values[2] = +w.getAtIndex(0) * fInvLength;
+            v.values[0] = w.getAtIndex(1) * u.getAtIndex(2);
+            v.values[1] = w.getAtIndex(2) * u.getAtIndex(0) - w.getAtIndex(0) * u.getAtIndex(2);
+            v.values[2] = -w.getAtIndex(1) * u.getAtIndex(0);
+        } else {
+            // w.y or w.z is the largest magnitude component, swap them
+            fInvLength = FastMath.invSqrt(w.getAtIndex(1) * w.getAtIndex(1) + w.getAtIndex(2) * w.getAtIndex(2));
+            u.values[0] = 0.0f;
+            u.values[1] = +w.getAtIndex(2) * fInvLength;
+            u.values[2] = -w.getAtIndex(1) * fInvLength;
+            v.values[0] = w.getAtIndex(1) * u.getAtIndex(2) - w.getAtIndex(2) * u.getAtIndex(1);
+            v.values[1] = -w.getAtIndex(0) * u.getAtIndex(2);
+            v.values[2] = w.getAtIndex(0) * u.getAtIndex(1);
+        }
+    }
 }
