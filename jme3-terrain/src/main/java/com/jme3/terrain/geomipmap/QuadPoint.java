@@ -19,8 +19,8 @@ public class QuadPoint {
 	    
     
     private boolean calculateColRow(int i, int x, int z, Spatial spat ) {
-        int col = x;
-        int row = z;
+        col = x;
+        row = z;
         boolean match = false;
 
         // get the childs quadrant
@@ -72,7 +72,7 @@ public class QuadPoint {
                     if (spat instanceof TerrainQuad) {
                         return ((TerrainQuad) spat).getHeightmapHeight(col, row);
                     } else if (spat instanceof TerrainPatch) {
-                        return ((TerrainPatch) spat).getHeightmapHeight(col, row);
+                        return TerrainPatchNormals.getHeightmapHeight(col, row, (TerrainPatch) spat);
                     }
                 }
 
@@ -89,9 +89,9 @@ public class QuadPoint {
 
                 if (match) {
                     if (spat instanceof TerrainQuad) {
-                        return ((TerrainQuad) spat).getMeshNormal(col, row);
+                        return TerrainNormals.getMeshNormal(col, row, (TerrainQuad) spat);
                     } else if (spat instanceof TerrainPatch) {
-                        return ((TerrainPatch) spat).getMeshNormal(col, row);
+                        return TerrainNormals.getMeshNormal(col, row, (TerrainQuad) spat);
                     }
                 }
 

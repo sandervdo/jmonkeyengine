@@ -1011,6 +1011,7 @@ jme3-testdata/bin/Sound/Environment/Nature.ogg
 jme3-testdata/bin/Sound/Environment/Ocean Waves.ogg
 jme3-testdata/bin/Sound/Environment/River.ogg
 *.class
+*.blend
 jme3-android/.settings
 jme3-android-native/.settings
 jme3-blender/.settings
@@ -1029,6 +1030,25 @@ jme3-jbullet/.settings
 jme3-plugins/.settings
 jme3-networking/.settings
 jme3-lwjgl/.settings
+*.tga
+*.png
+*.jpg
+jme3-testdata/bin/Blender/test.conf
+jme3-testdata/bin/Interface/Logo/Logo.j3m
+jme3-testdata/bin/Interface/Nifty/CinematicTest.xml
+jme3-testdata/bin/Interface/Nifty/HelloJme.xml
+jme3-testdata/bin/Materials/Geom/SimpleGeom.frag
+jme3-testdata/bin/Materials/Geom/SimpleGeom.geom
+jme3-testdata/bin/Materials/Geom/SimpleGeom.j3m
+jme3-testdata/bin/Materials/Geom/SimpleGeom.j3md
+jme3-testdata/bin/Materials/Geom/SimpleGeom.vert
+jme3-testdata/bin/Materials/Tess/SimpleTess.frag
+jme3-testdata/bin/Materials/Tess/SimpleTess.j3m
+jme3-testdata/bin/Materials/Tess/SimpleTess.j3md
+jme3-testdata/bin/Materials/Tess/SimpleTess.tsctrl
+jme3-testdata/bin/Materials/Tess/SimpleTess.tseval
+jme3-testdata/bin/Materials/Tess/SimpleTess.vert
+*.cfg
 jme3-ios/.settings
 jme3-effects/.settings
 jme3-desktop/.settings
@@ -1037,3 +1057,11 @@ jme3-lwjgl3/.settings
 jme3-niftygui/.settings
 jme3-terrain/.settings
 jme3-testdata/.settings
+*.frag
+*.j3md
+*.vert
+*.j3sn
+*.glsllib
+*.j3m
+*.fnt
+*.properties
