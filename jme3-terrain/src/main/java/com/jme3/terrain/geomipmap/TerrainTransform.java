@@ -166,7 +166,7 @@ public class TerrainTransform {
      * in the 'holder' list
      * @param holder must not be null, will be populated when returns
      */
-    public void getAllTerrainPatches(List<TerrainPatch> holder, TerrainQuad tq) {
+    public static void getAllTerrainPatches(List<TerrainPatch> holder, TerrainQuad tq) {
         if (tq.getChildren() != null) {
             for (int i = tq.getChildren().size(); --i >= 0;) {
                 Spatial child = tq.getChildren().get(i);
@@ -179,7 +179,7 @@ public class TerrainTransform {
         }
     }
 
-    public void getAllTerrainPatchesWithTranslation(Map<TerrainPatch,Vector3f> holder, Vector3f translation, TerrainQuad tq) {
+    public static void getAllTerrainPatchesWithTranslation(Map<TerrainPatch,Vector3f> holder, Vector3f translation, TerrainQuad tq) {
         if (tq.getChildren() != null) {
             for (int i = tq.getChildren().size(); --i >= 0;) {
                 Spatial child = tq.getChildren().get(i);

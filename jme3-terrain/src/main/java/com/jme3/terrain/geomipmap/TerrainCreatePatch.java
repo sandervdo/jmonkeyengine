@@ -19,14 +19,11 @@ public class TerrainCreatePatch {
      *			the height data.
      */
     public static void split(int blockSize, float[] heightMap, TerrainQuad tq) {
-    	System.out.println(tq.getChildren().size());
         if ((tq.getSize() >> 1) + 1 <= blockSize) {
             createQuadPatch(heightMap, tq);
         } else {
             createQuad(blockSize, heightMap, tq);
         }
-        System.out.println(tq.getChildren().size());
-
     }
     
     protected static Vector2f createBasicOffset(Vector2f offset) {
@@ -37,7 +34,7 @@ public class TerrainCreatePatch {
     }
     
     protected static void addPatch(String name, int quadrant, int split, float[] heightBlock, Vector3f origin, Vector2f tempOffset, TerrainQuad tq) {
-    	TerrainPatch patch = new TerrainPatch(tq.getName() + "Patch1", split,
+    	TerrainPatch patch = new TerrainPatch(tq.getName() + name, split,
                 tq.getStepScale(), heightBlock, origin, tq.getTotalSize(), tempOffset,
                 tq.getOffsetAmount());
     	patch.setQuadrant((short) quadrant);
@@ -141,12 +138,13 @@ public class TerrainCreatePatch {
      * coordinate of the terrain, so it grows in the positive x.z direction.
      */
     
-    protected static void setDefaultOffset(Vector2f tempOffset, Vector3f origin, Vector2f offset) {
-    	tempOffset = new Vector2f();
+    protected static Vector2f setDefaultOffset(Vector3f origin, Vector2f offset) {
+    	Vector2f tempOffset = new Vector2f();
     	tempOffset.x = offset.x;
     	tempOffset.y = offset.y;
     	tempOffset.x += origin.x;
     	tempOffset.y += origin.z;
+    	return tempOffset;
     }
     
     protected static  void attachQuad(float[] heightBlock, Vector3f origin, Vector2f tempOffset, int quaddrant, String name, int split, int blockSize, TerrainQuad tq) {	
@@ -165,7 +163,6 @@ public class TerrainCreatePatch {
 
         int split = (tq.getSize()+ 1) >> 1;
 
-        Vector2f tempOffset = new Vector2f();
         tq.setOffsetAmount(tq.getOffsetAmount() + quarterSize);
 
         //if (lodCalculator == null)
@@ -176,9 +173,7 @@ public class TerrainCreatePatch {
     	Vector3f origin1 = new Vector3f(-quarterSize * tq.getStepScale().x, 0,
                 -quarterSize * tq.getStepScale().z);
     	
-    	setDefaultOffset(tempOffset, origin1, tq.getOffSet());
-        
-        attachQuad(heightBlock1, origin1, tempOffset, 1, "Quad1", split, blockSize, tq);
+        attachQuad(heightBlock1, origin1, setDefaultOffset(origin1, tq.getOffSet()), 1, "Quad1", split, blockSize, tq);
 
         // 2 lower left of heightmap, lower left quad
         float[] heightBlock2 = createHeightSubBlock(heightMap, 0, split - 1,
@@ -187,9 +182,8 @@ public class TerrainCreatePatch {
     	Vector3f origin2 = new Vector3f(-quarterSize * tq.getStepScale().x, 0,
                 quarterSize * tq.getStepScale().z);
     	
-    	setDefaultOffset(tempOffset, origin2, tq.getOffSet());
         
-        attachQuad(heightBlock2, origin2, tempOffset, 2, "Quad2", split, blockSize, tq);
+        attachQuad(heightBlock2, origin2, setDefaultOffset(origin2, tq.getOffSet()), 2, "Quad2", split, blockSize, tq);
 
 
         // 3 upper right of heightmap, upper right quad
@@ -198,10 +192,8 @@ public class TerrainCreatePatch {
 
     	Vector3f origin3 = new Vector3f(quarterSize * tq.getStepScale().x, 0,
                 -quarterSize * tq.getStepScale().z);
-    	
-    	setDefaultOffset(tempOffset, origin3, tq.getOffSet());
-        
-        attachQuad(heightBlock3, origin3, tempOffset, 3, "Quad3", split, blockSize, tq);
+    	        
+        attachQuad(heightBlock3, origin3, setDefaultOffset(origin3, tq.getOffSet()), 3, "Quad3", split, blockSize, tq);
         
         // 4 lower right of heightmap, lower right quad
         float[] heightBlock4 = createHeightSubBlock(heightMap, split - 1,
@@ -209,10 +201,8 @@ public class TerrainCreatePatch {
 
     	Vector3f origin4 = new Vector3f(quarterSize * tq.getStepScale().x, 0,
                 quarterSize * tq.getStepScale().z);
-    	
-    	setDefaultOffset(tempOffset, origin4, tq.getOffSet());
         
-        attachQuad(heightBlock4, origin4, tempOffset, 4, "Quad4", split, blockSize, tq);
+        attachQuad(heightBlock4, origin4, setDefaultOffset(origin4, tq.getOffSet()), 4, "Quad4", split, blockSize, tq);
 
     }
     
