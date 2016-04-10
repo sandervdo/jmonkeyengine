@@ -89,10 +89,10 @@ public class TerrainPatch extends Geometry {
     protected short quadrant = 1;
 
     // x/z step
-    protected Vector3f stepScale;
+    protected Vector stepScale;
 
     // center of the patch in relation to (0,0,0)
-    protected Vector2f offset;
+    protected Vector offset;
 
     // amount the patch has been shifted.
     protected float offsetAmount;
@@ -104,8 +104,8 @@ public class TerrainPatch extends Geometry {
     protected boolean searchedForNeighboursAlready = false;
 
     // these two vectors are calculated on the GL thread, but used in the outside LOD thread
-    protected Vector3f worldTranslationCached;
-    protected Vector3f worldScaleCached;
+    protected Vector worldTranslationCached;
+    protected Vector worldScaleCached;
 
     public TerrainPatch() {
         super("TerrainPatch");
@@ -118,7 +118,7 @@ public class TerrainPatch extends Geometry {
     }
 
     public TerrainPatch(String name, int size) {
-        this(name, size, new Vector3f(1,1,1), null, new Vector3f(0,0,0));
+        this(name, size, new Vector(3), null, Vector.ZERO(3));
     }
     
     public TerrainPatchLod getTpLod() {
@@ -141,9 +141,9 @@ public class TerrainPatch extends Geometry {
      * @param origin
      *			the origin offset of the patch.
      */
-    public TerrainPatch(String name, int size, Vector3f stepScale,
-                    float[] heightMap, Vector3f origin) {
-        this(name, size, stepScale, heightMap, origin, size, new Vector2f(), 0);
+    public TerrainPatch(String name, int size, Vector stepScale,
+                    float[] heightMap, Vector origin) {
+        this(name, size, stepScale, heightMap, origin, size, new Vector(2), 0);
     }
 
     /**
@@ -164,21 +164,21 @@ public class TerrainPatch extends Geometry {
      * @param totalSize
      *			the total size of the terrain. (Higher if the patch is part of
      *			a <code>TerrainQuad</code> tree.
-     * @param offset
+     * @param vector
      *			the offset for texture coordinates.
      * @param offsetAmount
      *			the total offset amount. Used for texture coordinates.
      */
-    public TerrainPatch(String name, int size, Vector3f stepScale,
-                    float[] heightMap, Vector3f origin, int totalSize,
-                    Vector2f offset, float offsetAmount) {
+    public TerrainPatch(String name, int size, Vector stepScale,
+                    float[] heightMap, Vector origin, int totalSize,
+                    Vector vector, float offsetAmount) {
         super(name);
         setBatchHint(BatchHint.Never);
         this.size = size;
         this.stepScale = stepScale;
         this.totalSize = totalSize;
         this.offsetAmount = offsetAmount;
-        this.offset = offset;
+        this.offset = vector;
 
         setLocalTranslation(origin);
 
@@ -331,7 +331,7 @@ public class TerrainPatch extends Geometry {
      *
      * @return The current step scale.
      */
-    public Vector3f getStepScale() {
+    public Vector getStepScale() {
         return stepScale;
     }
 
@@ -359,7 +359,7 @@ public class TerrainPatch extends Geometry {
      *
      * @return The current offset amount.
      */
-    public Vector2f getOffset() {
+    public Vector getOffset() {
         return offset;
     }
 
@@ -371,7 +371,7 @@ public class TerrainPatch extends Geometry {
      * @param offset
      *			The new texture offset.
      */
-    public void setOffset(Vector2f offset) {
+    public void setOffset(Vector offset) {
         this.offset = offset;
     }
 
@@ -409,7 +409,7 @@ public class TerrainPatch extends Geometry {
      * @param stepScale
      *			The new step scale.
      */
-    public void setStepScale(Vector3f stepScale) {
+    public void setStepScale(Vector stepScale) {
         this.stepScale = stepScale;
     }
 
@@ -515,6 +515,54 @@ public class TerrainPatch extends Geometry {
 
 
 
+    protected Vector worldCoordinateToLocal(Vector loc) {
+        Vector translated = new Vector(3);
+        translated.setX(loc.getX()/getWorldScale().getX() - getWorldTranslation().getX());
+        translated.setY(loc.getY()/getWorldScale().getY() - getWorldTranslation().getY());
+        translated.setZ(loc.getZ()/getWorldScale().getZ() - getWorldTranslation().getZ());
+        return translated;
+    }
+
+    /**
+     * This most definitely is not optimized.
+     */
+    private int collideWithBoundingBox(BoundingBox bbox, CollisionResults results) {
+        
+        // test the four corners, for cases where the bbox dimensions are less than the terrain grid size, which is probably most of the time
+        Vector topLeft = worldCoordinateToLocal(new Vector(bbox.getCenter().getX()-bbox.getXExtent(), 0, bbox.getCenter().getZ()-bbox.getZExtent()));
+        Vector topRight = worldCoordinateToLocal(new Vector(bbox.getCenter().getX()+bbox.getXExtent(), 0, bbox.getCenter().getZ()-bbox.getZExtent()));
+        Vector bottomLeft = worldCoordinateToLocal(new Vector(bbox.getCenter().getX()-bbox.getXExtent(), 0, bbox.getCenter().getZ()+bbox.getZExtent()));
+        Vector bottomRight = worldCoordinateToLocal(new Vector(bbox.getCenter().getX()+bbox.getXExtent(), 0, bbox.getCenter().getZ()+bbox.getZExtent()));
+
+        Triangle t = getTriangle(topLeft.getX(), topLeft.getZ());
+        if (t != null && bbox.collideWith(t, results) > 0)
+            return 1;
+        t = getTriangle(topRight.getX(), topRight.getZ());
+        if (t != null && bbox.collideWith(t, results) > 0)
+            return 1;
+        t = getTriangle(bottomLeft.getX(), bottomLeft.getZ());
+        if (t != null && bbox.collideWith(t, results) > 0)
+            return 1;
+        t = getTriangle(bottomRight.getX(), bottomRight.getZ());
+        if (t != null && bbox.collideWith(t, results) > 0)
+            return 1;
+        
+        // box is larger than the points on the terrain, so test against the points
+        for (float z=topLeft.getZ(); z<bottomLeft.getZ(); z+=1) {
+            for (float x=topLeft.getX(); x<topRight.getX(); x+=1) {
+                
+                if (x < 0 || z < 0 || x >= size || z >= size)
+                    continue;
+                t = getTriangle(x,z);
+                if (t != null && bbox.collideWith(t, results) > 0)
+                    return 1;
+            }
+        }
+
+        return 0;
+    }
+
+
     @Override
     public void write(JmeExporter ex) throws IOException {
         // the mesh is removed, and reloaded when read() is called
@@ -545,8 +593,8 @@ public class TerrainPatch extends Geometry {
         size = ic.readInt("size", 16);
         totalSize = ic.readInt("totalSize", 16);
         quadrant = ic.readShort("quadrant", (short)0);
-        stepScale = (Vector3f) ic.readSavable("stepScale", Vector3f.UNIT_XYZ);
-        offset = (Vector2f) ic.readSavable("offset", Vector3f.UNIT_XYZ);
+        stepScale = (Vector) ic.readSavable("stepScale", Vector.ONES(3));
+        offset = (Vector) ic.readSavable("offset", Vector.ONES(3));
         offsetAmount = ic.readFloat("offsetAmount", 0);
         //lodCalculator = (LodCalculator) ic.readSavable("lodCalculator", new DistanceLodCalculator());
         //lodCalculator.setTerrainPatch(this);
@@ -601,11 +649,11 @@ public class TerrainPatch extends Geometry {
         this.worldTranslationCached = getWorldTranslation().clone();
     }
 
-    public Vector3f getWorldScaleCached() {
+    public Vector getWorldScaleCached() {
         return worldScaleCached;
     }
 
-    public Vector3f getWorldTranslationCached() {
+    public Vector getWorldTranslationCached() {
         return worldTranslationCached;
     }
 

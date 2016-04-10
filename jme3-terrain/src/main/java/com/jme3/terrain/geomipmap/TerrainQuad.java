@@ -42,7 +42,7 @@ import com.jme3.export.OutputCapsule;
 import com.jme3.material.Material;
 import com.jme3.math.FastMath;
 import com.jme3.math.Ray;
-import com.jme3.math.Vector2f;
+import com.jme3.math.Vector;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
@@ -107,7 +107,7 @@ import java.util.logging.Logger;
  * @author Brent Owens
  */
 public class TerrainQuad extends Node implements Terrain {
-    protected Vector2f offset;
+    protected Vector offset;
 
     protected int totalSize; // the size of this entire terrain tree (on one side)
 
@@ -115,7 +115,7 @@ public class TerrainQuad extends Node implements Terrain {
 
     protected int patchSize; // size of the individual patches
 
-    protected Vector3f stepScale;
+    protected Vector stepScale;
 
     protected float offsetAmount;
 
@@ -154,7 +154,7 @@ public class TerrainQuad extends Node implements Terrain {
      * must match the totalSize. So a 513x513 heightmap is needed for a terrain with totalSize of 513.
      */
     public TerrainQuad(String name, int patchSize, int totalSize, float[] heightMap) {
-        this(name, patchSize, totalSize, Vector3f.UNIT_XYZ, heightMap);
+        this(name, patchSize, totalSize, Vector.ONES(3), heightMap);
                 
         affectedAreaBBox = new BoundingBox(new Vector3f(0,0,0), size*2, Float.MAX_VALUE, size*2);
         fixNormalEdges(affectedAreaBBox);
@@ -173,7 +173,7 @@ public class TerrainQuad extends Node implements Terrain {
      */
     @Deprecated
     public TerrainQuad(String name, int patchSize, int quadSize, int totalSize, float[] heightMap) {
-        this(name, patchSize, totalSize, quadSize, Vector3f.UNIT_XYZ, heightMap);
+        this(name, patchSize, totalSize, quadSize, Vector.ONES(3), heightMap);
     }
 
     /**
@@ -187,8 +187,8 @@ public class TerrainQuad extends Node implements Terrain {
      * height map will be generated if this is null)
      */
     @Deprecated
-    public TerrainQuad(String name, int patchSize, int size, Vector3f scale, float[] heightMap) {
-        this(name, patchSize, size, scale, heightMap, size, new Vector2f(), 0);
+    public TerrainQuad(String name, int patchSize, int size, Vector scale, float[] heightMap) {
+        this(name, patchSize, size, scale, heightMap, size, new Vector(2), 0);
         //affectedAreaBBox = new BoundingBox(new Vector3f(0,0,0), size*2, Float.MAX_VALUE, size*2);
         //fixNormalEdges(affectedAreaBBox);
         //addControl(new NormalRecalcControl(this));
@@ -206,8 +206,8 @@ public class TerrainQuad extends Node implements Terrain {
      * height map will be generated if this is null)
      */
     @Deprecated
-    public TerrainQuad(String name, int patchSize, int totalSize, int quadSize, Vector3f scale, float[] heightMap) {
-        this(name, patchSize, quadSize, scale, heightMap, totalSize, new Vector2f(), 0);
+    public TerrainQuad(String name, int patchSize, int totalSize, int quadSize, Vector scale, float[] heightMap) {
+        this(name, patchSize, quadSize, scale, heightMap, totalSize, new Vector(2), 0);
         //affectedAreaBBox = new BoundingBox(new Vector3f(0,0,0), totalSize*2, Float.MAX_VALUE, totalSize*2);
         //fixNormalEdges(affectedAreaBBox);
         //addControl(new NormalRecalcControl(this));
@@ -361,7 +361,7 @@ public class TerrainQuad extends Node implements Terrain {
         return getMaterial(null);
     }
     
-    public Material getMaterial(Vector3f worldLocation) {
+    public Material getMaterial(Vector worldLocation) {
         // get the material from one of the children. They all share the same material
         if (children != null) {
             for (int i = children.size(); --i >= 0;) {
@@ -411,7 +411,7 @@ public class TerrainQuad extends Node implements Terrain {
         WireBox wb = new WireBox(bb.getXExtent(), bb.getYExtent(), bb.getZExtent());
         Geometry g = new Geometry();
         g.setMesh(wb);
-        g.setLocalTranslation(bb.getCenter());
+        g.setLocalTranslation(Vector.toVector(bb.getCenter()));
         parent.attachChild(g);
     }
     
@@ -419,7 +419,7 @@ public class TerrainQuad extends Node implements Terrain {
      * This will cause all normals for this terrain quad to be recalculated
      */
     protected void setNeedToRecalculateNormals() {
-        affectedAreaBBox = new BoundingBox(getWorldTranslation(), Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+        affectedAreaBBox = new BoundingBox(getWorldTranslation().toVector3f(), Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
     }
     
     protected static class LocationHeight {
@@ -428,6 +428,10 @@ public class TerrainQuad extends Node implements Terrain {
         float h;
 
         LocationHeight(){}
+        // offset
+        int halfSize = totalSize / 2;
+        int x = Math.round((xz.getX() / getWorldScale().getX()) + halfSize);
+        int z = Math.round((xz.getY() / getWorldScale().getZ()) + halfSize);
 
         LocationHeight(int x, int z, float h){
             this.x = x;
@@ -459,7 +463,7 @@ public class TerrainQuad extends Node implements Terrain {
      * @return Float.NAN if the value does not exist, or the coordinates are outside of the terrain
      */
     
-    public float getHeight(Vector2f xz) {
+    public float getHeight(Vector xz) {
         // offset
         float x = (float)(((xz.x - getWorldTranslation().x) / getWorldScale().x) + (float)(totalSize-1) / 2f);
         float z = (float)(((xz.y - getWorldTranslation().z) / getWorldScale().z) + (float)(totalSize-1) / 2f);
@@ -471,7 +475,7 @@ public class TerrainQuad extends Node implements Terrain {
     }
 
 
-    public Vector3f getNormal(Vector2f xz) {
+    public Vector getNormal(Vector xz) {
         // offset
         float x = (float)(((xz.x - getWorldTranslation().x) / getWorldScale().x) + (float)(totalSize-1) / 2f);
         float z = (float)(((xz.y - getWorldTranslation().z) / getWorldScale().z) + (float)(totalSize-1) / 2f);
@@ -481,8 +485,8 @@ public class TerrainQuad extends Node implements Terrain {
     }
     
 
-    public void adjustHeight(Vector2f xz, float delta) {
-        List<Vector2f> coord = new ArrayList<Vector2f>();
+    public void adjustHeight(Vector xz, float delta) {
+        List<Vector> coord = new ArrayList<Vector>();
         coord.add(xz);
         List<Float> h = new ArrayList<Float>();
         h.add(delta);
@@ -568,8 +572,8 @@ public class TerrainQuad extends Node implements Terrain {
         super.read(e);
         InputCapsule c = e.getCapsule(this);
         size = c.readInt("size", 0);
-        stepScale = (Vector3f) c.readSavable("stepScale", null);
-        offset = (Vector2f) c.readSavable("offset", new Vector2f(0,0));
+        stepScale = (Vector) c.readSavable("stepScale", null);
+        offset = (Vector) c.readSavable("offset", new Vector(0,0));
         offsetAmount = c.readFloat("offsetAmount", 0);
         quadrant = c.readInt("quadrant", 0);
         totalSize = c.readInt("totalSize", 0);
@@ -577,7 +581,7 @@ public class TerrainQuad extends Node implements Terrain {
         //lodCalculatorFactory = (LodCalculatorFactory) c.readSavable("lodCalculatorFactory", null);
         
         if ( !(getParent() instanceof TerrainQuad) ) {
-            BoundingBox all = new BoundingBox(getWorldTranslation(), totalSize, totalSize, totalSize);
+            BoundingBox all = new BoundingBox(getWorldTranslation().toVector3f(), totalSize, totalSize, totalSize);
             affectedAreaBBox = all;
             TerrainNormals.updateNormals(this);
         }
@@ -590,7 +594,7 @@ public class TerrainQuad extends Node implements Terrain {
         c.write(size, "size", 0);
         c.write(totalSize, "totalSize", 0);
         c.write(stepScale, "stepScale", null);
-        c.write(offset, "offset", new Vector2f(0,0));
+        c.write(offset, "offset", new Vector(0,0));
         c.write(offsetAmount, "offsetAmount", 0);
         c.write(quadrant, "quadrant", 0);
         //c.write(lodCalculatorFactory, "lodCalculatorFactory", null);
