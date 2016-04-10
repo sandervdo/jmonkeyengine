@@ -33,6 +33,7 @@ package com.jme3.util;
 
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Quaternion;
+import com.jme3.math.Vector;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
@@ -315,6 +316,8 @@ public final class BufferUtils {
         buf.put(color.b);
         buf.put(color.a);
     }
+    
+    
 
     /**
      * Sets the data contained in the given quaternion into the FloatBuffer at the 
@@ -334,6 +337,25 @@ public final class BufferUtils {
         buf.put(quat.getY());
         buf.put(quat.getZ());
         buf.put(quat.getW());
+    }
+    
+    /**
+     * Sets the data contained in the given vector4 into the FloatBuffer at the
+     * specified index.
+     *
+     * @param vec
+     *            the {@link Vector4f} to insert
+     * @param buf
+     *            the buffer to insert into
+     * @param index
+     *            the postion to place the data; in terms of vector4 not floats
+     */
+    public static void setInBuffer(Vector vec, FloatBuffer buf,
+            int index) {
+        buf.position(index * vec.getValues().length);
+        for (int x = 0; x < vec.getValues().length; x++) {
+        	buf.put(vec.getAtIndex(x));
+        }
     }
 
     /**

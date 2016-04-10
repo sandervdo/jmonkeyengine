@@ -869,4 +869,10 @@ public class Vector implements Savable, Cloneable, java.io.Serializable {
             v.values[2] = w.getAtIndex(0) * u.getAtIndex(1);
         }
     }
+    
+    // Legacy stuff
+    public float getX() { return this.values[0]; }
+    public float getY() { return this.values[1]; }
+    public float getZ() { return this.values[2]; }
+    public float getW() { return this.values[3]; }
 }
